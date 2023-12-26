@@ -2,6 +2,8 @@
 
 A Figma widget that generates a frame with a list of components used in the Figma page that it is executed from.
 
+![Plugin Cover](https://github.com/abbasdawood/design-doctor/assets/46668006/997f3553-b4da-4451-9297-628daf98c9fe)
+
 ## Motivation
 As designers, we expect developers to copy the provided Mockup in a pixel perfect manner. But many a times, we forget to use the correct components as intended. Component growth is a dystopian nightmare. This plugin shows you the coverage of components from remote and local sources, hoping that you will reduce the local component coverage, and respect the design library that ought to be used. It is not a restrictive plugin, rather an informative one - just spilling out facts for you (the dseigner) to act upon.
 
