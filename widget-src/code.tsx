@@ -199,15 +199,17 @@ function Widget() {
       >
         <Text fontSize={18} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🩺 Design Doctor</Text>
         <AutoLayout
-          padding={4}
-          fill={'#369EFF'}
+          padding={{vertical:4, horizontal:8}}
+          stroke={'#f3f3f3'}
+          fill={'#fafafa'}
+          strokeWidth={1}
           horizontalAlignItems={'center'}
           cornerRadius={14}
           verticalAlignItems="center"
           onClick={() => {
             countStuffOnCurrentPage()
           }}>
-          <Text fontSize={10} fill={'#fff'} horizontalAlignText="center" fontFamily="Nunito">Check</Text>
+          <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Run Again</Text>
         </AutoLayout>
       </AutoLayout>
       <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>

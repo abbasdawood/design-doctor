@@ -1,3 +1,32 @@
+# Design Doctor
+
+A Figma widget that generates a frame with a list of components used in the Figma page that it is executed from.
+
+## Motivation
+As designers, we expect developers to copy the provided Mockup in a pixel perfect manner. But many a times, we forget to use the correct components as intended. Component growth is a dystopian nightmare. This plugin shows you the coverage of components from remote and local sources, hoping that you will reduce the local component coverage, and respect the design library that ought to be used. It is not a restrictive plugin, rather an informative one - just spilling out facts for you (the dseigner) to act upon.
+
+The idea was inspired by what the lovely folks at [Razorpay](https://github.com/razorpay) are doing with their [Blade Coverage Plugin](https://github.com/razorpay/blade/tree/master/packages/plugin-figma-blade-coverage)
+
+## Getting started
+- Add the plugin from Figma Community
+- Hit `Cmd / Ctrl + P` to open the quick access menu
+- Type Design Doctor and hit return
+- A widget will be created in some time on the page, with the details
+
+## How does it work?
+The plugin scans the current page from where it is invoked, scans all the Sections in it (Sections are a must as of now), all the Frames within the sections, and calculates the coverage of component instances used. It also mentions the remote components used as a list, the instances whose parents have been deleted / detached, and local components.
+
+Coverage is calculated as 
+`(Total Components - Local Components - Deleted Components) / Total Components`
+
+## Who can use it?
+- *Designers and Design Leads* - To validate whether you've been straying from the design system a lot, or is it intentional - and to see it as a number
+- *Developers* - to get an idea of what components are being used in a use case / functionality / feature - so you can plan your componentisation better
+
+## Contributing
+I plan to keep this project open source, with moderated contributions. Create an Issue on this repo, to get access and suggest enhancements.
+
+### Setup and Development
 Below are the steps to get your widget running. You can also find instructions at:
 
 https://www.figma.com/widget-docs/setup-guide/
