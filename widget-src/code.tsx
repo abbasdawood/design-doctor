@@ -2,10 +2,34 @@ const { widget } = figma
 const { useSyncedState, usePropertyMenu, AutoLayout, Text, SVG } = widget
 
 interface LibrariesCount {
-  components: { [key: string]: number };
-  colourStyles: { [key: string]: number };
-  textStyles: { [key: string]: number };
+  components: Record<string, { count: number; ids: string[] }>;
+  colourStyles: Record<string, { count: number; ids: string[] }>;
+  textStyles: Record<string, { count: number; ids: string[] }>;
 }
+
+interface Library {
+  ids: string[];
+  name: string;
+  count: number;
+}
+
+interface ComponentCount {
+  key: string;
+  count: number;
+  ids: string[];
+}
+
+let librariesCount: LibrariesCount = {
+  components: {},
+  colourStyles: {},
+  textStyles: {}
+};
+
+librariesCount = {
+  components: {},
+  colourStyles: {},
+  textStyles: {}
+};
 
 // Guard Functions
 const isFillStrokeNode = (node: SceneNode): node is RectangleNode | EllipseNode | PolygonNode | StarNode | VectorNode | TextNode => {
@@ -27,25 +51,136 @@ const getLibraryInfo = async (node: any) => {
   }
 }
 
-const getStyleInfo = async (styleId: any) => {
-  if (!styleId) return null;
+function selectLayersById(layerIds: string[]) {
+  // Clear the current selection
+  figma.currentPage.selection = [];
 
-  let style;
-  if (styleId.startsWith('S:')) {
-    // Fetching local style information
-    style = figma.getStyleById(styleId);
-  } else {
-    // Fetching remote style information (limited details available)
-    // You may attempt to fetch more details if the API allows
-    style = figma.getStyleById(styleId);
+  // Find and select each layer by its ID
+  for (const layerId of layerIds) {
+    const selectedLayer = figma.currentPage.findOne((node) => node.id === layerId);
+    if (selectedLayer) {
+      // Use the `select` method instead of directly modifying `selection`
+      figma.currentPage.selection = [...figma.currentPage.selection, selectedLayer];
+    } else {
+      console.error("Layer not found with ID: " + layerId);
+    }
+  }
+}
+
+function getVariableName(variableId: string) {
+  return figma.variables.getVariableById(variableId)?.name;
+}
+
+const isObjectEmpty = (objectName: any) => {
+  return Object.keys(objectName).length === 0
+}
+
+function getFillInfo(fillInfo: any) {
+
+  return fillInfo && fillInfo.map((f: any) => {
+    let colour;
+
+    console.log(f);
+
+    if (f.type === 'SOLID') {
+
+      if (f.color) {
+        if (!isObjectEmpty(f.boundVariables) && !isObjectEmpty(f.boundVariables.color) && f.boundVariables.color.type === 'VARIABLE_ALIAS') {
+          colour = getVariableName(f.boundVariables.color.id)
+        } else if (isObjectEmpty(f.boundVariables)) {
+          colour = 'Local Colour'
+        }
+      } else if (isObjectEmpty(f.color)) {
+        colour = 'No Fill'
+      }
+      console.log(`
+        Inferred: ${colour} | color ${JSON.stringify(f.color)}, BV ${JSON.stringify(f.boundVariables)}, BVC ${JSON.stringify(f.boundVariables.color)}
+      `);
+    }
+
+
+    return colour;
+  })
+}
+
+function traverseAllNodes(node: BaseNode, library: 'colourStyles' | 'textStyles') {
+  console.log('Traversing --> ', node.name);
+
+  function traverse(node: any) {
+    let count = 0;
+
+    let name = getFillInfo(node.fills);
+    const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
+
+    if (!librariesCount[library][name]) {
+      count++;
+      librariesCount[library][name] = { count: count, ids: [idToAdd] };
+    } else {
+      librariesCount[library][name].count += 1;
+      librariesCount[library][name].ids.push(idToAdd);
+    }
+
+    if ('children' in node) {
+      for (const child of node.children) {
+        traverse(child);
+      }
+    }
   }
 
-  if (style) {
-    return style.name      // Any other relevant properties
-  } else {
-    return 'Unknown Style';
+  traverse(node);
+
+  return librariesCount;
+}
+
+function traverseInstanceNodes(node: BaseNode, library: 'components' | 'colourStyles' | 'textStyles') {
+  console.log('Traversing --> ', node.name);
+
+  function traverse(node: any) {
+    if (node.type === 'INSTANCE' && node.mainComponent !== undefined) {
+      // Check if it's an instance with a main component
+      // console.log(
+      //   `Node --> ${node.name}\n 
+      //      Node type --> ${node.type}\n 
+      //      Node Parent Type --> ${node.parent?.type}\n 
+      //      Node Main Component --> ${node.mainComponent}\n
+      //      Node Main Component Parent --> ${node.mainComponent?.parent}\n
+      //      Node Main Component Parent Name --> ${node.mainComponent?.parent?.name}\n
+      //      Node Main Component Remote --> ${node.mainComponent?.remote}`
+      // );
+
+      let count = 0;
+
+      let name = node.mainComponent?.parent?.name;
+      const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
+
+      if (!librariesCount[library][name]) {
+        count++;
+        librariesCount[library][name] = { count: count, ids: [idToAdd] };
+      } else {
+        librariesCount[library][name].count += 1;
+        librariesCount[library][name].ids.push(idToAdd);
+      }
+    }
+
+    // we need to filter out:
+    // Node type == Instance, Main component !== undefined
+
+    // Recursively traverse child nodes
+
+
+    // Traverse all nodes, except for when its an INSTANCE of a COMPONENT
+    if ('children' in node && node.type !== 'INSTANCE') {
+      for (const child of node.children) {
+        traverse(child);
+      }
+    }
   }
-};
+
+  // Start traversal from the root of the document
+  traverse(node);
+
+  return librariesCount;
+}
 
 
 function Widget() {
@@ -62,83 +197,44 @@ function Widget() {
   const countStuffOnCurrentPage = async () => {
     const currentPage = figma.currentPage;
     let totalLocalInstanceCount = 0;
-    let librariesCount: LibrariesCount = {
+
+    librariesCount = {
       components: {},
       colourStyles: {},
       textStyles: {}
     };
 
-    // Helper function to increment count
-    const incrementCount = (library: 'components' | 'colourStyles' | 'textStyles', name: string) => {
-      if (library === 'components' && (name === 'Deleted Parent' || name === 'Unknown Parent')) {
-        uk++;
-        setUnknowns(uk);
-      }
-      librariesCount[library][name] = (librariesCount[library][name] || 0) + 1;
-    };
+    setLibraryCounts(librariesCount);
+    setTotalColourStyleCount(0);
+    setTotalComponentCount(0);
 
-    for (const node of currentPage.findAll()) {
-      // First find the sections
-      if (node.type === 'SECTION') {
-        console.log('Traversing ', node.name)
-        for (const child of node.children) {
-          console.log('Traversing ', child.name)
-          if (child.type === 'FRAME') {
-            for (const grandchild of child.children) {
-              console.log('Traversing ', grandchild.name)
-              if (grandchild.type === 'INSTANCE') {
-                // const libraryName = await getLibraryInfo(node);
-                if (grandchild.mainComponent?.remote) {
-                  let key = grandchild.mainComponent ? (grandchild.mainComponent.parent ? grandchild.mainComponent.parent.name : 'Deleted Parent') : 'Unknown Parent';
-                  // let system = await getLibraryInfo(grandchild);
-                  // if(system){
-                  // incrementCount('components', `${system} - ${key}`);
-                  // } else {
-                  incrementCount('components', key);
-                  // }
-                }
-                else {
-                  totalLocalInstanceCount++;
-                }
-              }
+    figma.skipInvisibleInstanceChildren = true;
+    for (const node of currentPage.findAllWithCriteria({ types: ['SECTION'] })) {
+      traverseInstanceNodes(node, 'components');
+      traverseAllNodes(node, 'colourStyles');
 
-              // Check for color styles
-              if (isFillStrokeNode(grandchild)) {
-                if (grandchild.fillStyleId) {
-                  // Assuming getStyleInfo returns the style's library name
-                  const fillStyleLibrary = await getStyleInfo(grandchild.fillStyleId);
-                  if (fillStyleLibrary) incrementCount('colourStyles', fillStyleLibrary);
-                }
-
-                if (grandchild.strokeStyleId) {
-                  const strokeStyleLibrary = await getStyleInfo(grandchild.strokeStyleId);
-                  if (strokeStyleLibrary) incrementCount('colourStyles', strokeStyleLibrary);
-                }
-              }
-
-              // Check for text styles
-              // if ('textStyleId' in grandchild) {
-              //   if (grandchild.type === 'TEXT' && grandchild.textStyleId) {
-              //     const textStyleLibrary = await getStyleInfo(grandchild.textStyleId);
-              //     if (textStyleLibrary) incrementCount('textStyles', textStyleLibrary);
-              //   }
-              // }
-            }
-          }
-
-        }
-      }
-
+      console.log(librariesCount);
     }
 
-    setTotalComponentCount(totalLocalInstanceCount + Object.values(librariesCount['components']).reduce((a, b) => a + b, 0));
-    setTotalColourStyleCount(totalColourStyleCount + Object.values(librariesCount['colourStyles']).reduce((a, b) => a + b, 0));
+    setTotalComponentCount(
+      totalLocalInstanceCount +
+      Object.values(librariesCount['components']).reduce(
+        (acc, component) => acc + component.count,
+        0
+      )
+    );
+
+    setTotalColourStyleCount(
+      totalColourStyleCount +
+      Object.values(librariesCount['colourStyles']).reduce(
+        (acc, component) => acc + component.count,
+        0
+      )
+    );
+
     // setTotalTextStyleCount(totalTextStyleCount + Object.values(librariesCount['textStyles']).reduce((a, b) => a + b, 0));
     setLibraryCounts(librariesCount);
     setLocalComponentsCount(totalLocalInstanceCount);
-
-    console.log(`Library Instance Counts: `, librariesCount);
-    console.log(`Total Local Instances: ${totalLocalInstanceCount}`);
   };
 
 
@@ -160,13 +256,32 @@ function Widget() {
   )
 
   const renderLibraryCounts = (type: 'components' | 'colourStyles' | 'textStyles') => {
-    return Object.entries(libraryCounts[type]).map(([libraryName, count]) => (
-      <AutoLayout key={libraryName} direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
-        <Text fontSize={10} fontFamily="Nunito">{libraryName}</Text>
-        <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right">{`${count}`}</Text>
+    return Object.entries<Library>(libraryCounts[type]).map(([libraryId, library]) => (
+      <AutoLayout key={libraryId} direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
+        <AutoLayout direction="horizontal" spacing={4} width={'fill-parent'} verticalAlignItems="center">
+          <Text fontSize={10} fontFamily="Nunito" truncate={true} width={'hug-contents'}>
+            {libraryId.length > 30 ? libraryId.slice(0, 30) + '..' : libraryId}
+          </Text>
+          <AutoLayout
+            padding={{ vertical: 4, horizontal: 8 }}
+            stroke={'#f3f3f3'}
+            fill={'#fafafa'}
+            strokeWidth={1}
+            horizontalAlignItems={'center'}
+            cornerRadius={14}
+            verticalAlignItems="center"
+            onClick={() => {
+              selectLayersById(library.ids)
+            }}
+          >
+            <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Select</Text>
+          </AutoLayout>
+        </AutoLayout>
+        <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right">{`${library.count}`}</Text>
       </AutoLayout>
     ));
   };
+
 
   const showCoverage = (type: 'components' | 'colours' | 'text') => {
     if (type === 'components') {
@@ -174,6 +289,12 @@ function Widget() {
       const coverageString = (100 * coverage).toFixed(2)
       return `${coverageString}`;
     }
+    else if (type === 'colours') {
+      return `${totalColourStyleCount} Colours`;
+    }
+    // else if (type === 'text'){
+    //   return `${total} Styles`;
+    // } 
     else
       return 'N/A';
   }
@@ -199,7 +320,7 @@ function Widget() {
       >
         <Text fontSize={18} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🩺 Design Doctor</Text>
         <AutoLayout
-          padding={{vertical:4, horizontal:8}}
+          padding={{ vertical: 4, horizontal: 8 }}
           stroke={'#f3f3f3'}
           fill={'#fafafa'}
           strokeWidth={1}
@@ -237,7 +358,6 @@ function Widget() {
             <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={'#f00'}>{localComponentsCount}</Text>
           </AutoLayout>
         </AutoLayout>
-
 
       </AutoLayout>
       <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
