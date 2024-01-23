@@ -2,58 +2,124 @@ const { widget } = figma
 const { useSyncedState, usePropertyMenu, AutoLayout, Text, SVG } = widget
 
 interface LibrariesCount {
-  components: { [key: string]: number };
-  colourStyles: { [key: string]: number };
-  textStyles: { [key: string]: number };
+  components: Record<string, { count: number; ids: string[] }>;
+  localComponents: Record<string, { count: number; ids: string[] }>;
+  colourStyles: Record<string, { count: number; ids: string[] }>;
+  textStyles: Record<string, { count: number; ids: string[] }>;
 }
 
-// Guard Functions
-const isFillStrokeNode = (node: SceneNode): node is RectangleNode | EllipseNode | PolygonNode | StarNode | VectorNode | TextNode => {
-  return 'fillStyleId' in node || 'strokeStyleId' in node;
+let librariesCount: LibrariesCount = {
+  components: {},
+  localComponents: {},
+  colourStyles: {},
+  textStyles: {}
 };
 
-
-// Helpers
-const getLibraryInfo = async (node: any) => {
-  const componentKey = node.mainComponent.key;
-  console.log('Looking up for ', node.mainComponent.key);
-  const publishStatus: string = await figma.clientStorage.getAsync(componentKey);
-  if (publishStatus) {
-    // If the publish status includes library information, you can extract it here
-    console.log(`Library Info: ${publishStatus}`);
-    return publishStatus; // This might include library information
-  } else {
-    return 'Not found';
-  }
+interface Library {
+  ids: string[];
+  name: string;
+  count: number;
 }
 
-const getStyleInfo = async (styleId: any) => {
-  if (!styleId) return null;
+function traverseInstanceNodes(node: BaseNode) {
+  console.log('Traversing --> ', node.name);
 
-  let style;
-  if (styleId.startsWith('S:')) {
-    // Fetching local style information
-    style = figma.getStyleById(styleId);
-  } else {
-    // Fetching remote style information (limited details available)
-    // You may attempt to fetch more details if the API allows
-    style = figma.getStyleById(styleId);
+  function traverse(node: any) {
+    if (node.type === 'INSTANCE') {
+      // Check if it's an instance with a main component
+      console.log(
+        `Node --> ${node.name}\n 
+           Node type --> ${node.type}\n 
+           Node Parent Type --> ${node.parent?.type}\n 
+           Node Main Component --> ${node.mainComponent}\n
+           Node Main Component Name --> ${node.mainComponent.name}\n
+           Node Main Component Parent --> ${node.mainComponent.parent}\n
+           Node Main Component Parent Name --> ${node.mainComponent.parent?.name}\n
+           Node Main Component Remote --> ${node.mainComponent?.remote}`
+      );
+
+      let count = 0;
+      let localCount = 0;
+
+      let name = node.masterComponent.detached? 'Detached Parent' : (node.mainComponent?.parent?.name || node.mainComponent.name);
+      const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
+
+      if (node.mainComponent.remote) {
+        if (!librariesCount['components'][name]) {
+          count++;
+          librariesCount['components'][name] = { count: count, ids: [idToAdd] };
+        } else {
+          librariesCount['components'][name].count += 1;
+          librariesCount['components'][name].ids.push(idToAdd);
+        }
+      } else {
+        if (!librariesCount['localComponents'][name]) {
+          localCount++;
+          librariesCount['localComponents'][name] = { count: localCount, ids: [idToAdd] };
+        } else {
+          librariesCount['localComponents'][name].count += 1;
+          librariesCount['localComponents'][name].ids.push(idToAdd);
+        }
+      }
+
+      // if (!librariesCount[library][name]) {
+      //   count++;
+      //   librariesCount[library][name] = { count: count, ids: [idToAdd] };
+      // } else {
+      //   librariesCount[library][name].count += 1;
+      //   librariesCount[library][name].ids.push(idToAdd);
+      // }
+    }
+
+    // we need to filter out:
+    // Node type == Instance, Main component !== undefined
+
+    // Recursively traverse child nodes
+
+
+    // Traverse all nodes, except for when its an INSTANCE of a COMPONENT
+    if ('children' in node && node.type !== 'INSTANCE') {
+      for (const child of node.children) {
+        traverse(child);
+      }
+    }
   }
 
-  if (style) {
-    return style.name      // Any other relevant properties
-  } else {
-    return 'Unknown Style';
-  }
-};
+  // Start traversal from the root of the document
+  traverse(node);
+}
 
+function resetCounter() {
+  librariesCount = {
+    components: {},
+    localComponents: {},
+    colourStyles: {},
+    textStyles: {}
+  };
+}
+
+function selectLayersById(layerIds: string[]) {
+  // Clear the current selection
+  figma.currentPage.selection = [];
+
+  // Find and select each layer by its ID
+  for (const layerId of layerIds) {
+    const selectedLayer = figma.currentPage.findOne((node) => node.id === layerId);
+    if (selectedLayer) {
+      // Use the `select` method instead of directly modifying `selection`
+      figma.currentPage.selection = [...figma.currentPage.selection, selectedLayer];
+    } else {
+      console.error("Layer not found with ID: " + layerId);
+    }
+  }
+}
 
 function Widget() {
   const [totalComponentCount, setTotalComponentCount] = useSyncedState('totalComponentCount', 0);
   const [totalColourStyleCount, setTotalColourStyleCount] = useSyncedState('totalColourStyleCount', 0);
   // const [totalTextStyleCount, setTotalTextStyleCount] = useSyncedState('totalTextStyleCount', 0);
 
-  const [libraryCounts, setLibraryCounts] = useSyncedState('libraryCounts', { components: {}, colourStyles: {}, textStyles: {} });
+  const [libraryCounts, setLibraryCounts] = useSyncedState('libraryCounts', { components: {}, colourStyles: {}, textStyles: {} , localComponents:{}});
   const [localComponentsCount, setLocalComponentsCount] = useSyncedState('localComponentsCount', 0);
 
   const [unknowns, setUnknowns] = useSyncedState('unknowns', 0);
@@ -62,84 +128,62 @@ function Widget() {
   const countStuffOnCurrentPage = async () => {
     const currentPage = figma.currentPage;
     let totalLocalInstanceCount = 0;
-    let librariesCount: LibrariesCount = {
-      components: {},
-      colourStyles: {},
-      textStyles: {}
-    };
+
+    resetCounter();
 
     // Helper function to increment count
-    const incrementCount = (library: 'components' | 'colourStyles' | 'textStyles', name: string) => {
-      if (library === 'components' && (name === 'Deleted Parent' || name === 'Unknown Parent')) {
-        uk++;
-        setUnknowns(uk);
-      }
-      librariesCount[library][name] = (librariesCount[library][name] || 0) + 1;
-    };
+    // const incrementCount = (library: 'components' | 'colourStyles' | 'textStyles', name: string) => {
+    //   if (library === 'components' && (name === 'Deleted Parent' || name === 'Unknown Parent')) {
+    //     uk++;
+    //     setUnknowns(uk);
+    //   }
+    //   librariesCount[library][name] = (librariesCount[library][name] || 0) + 1;
+    // };
 
-    for (const node of currentPage.findAll()) {
+    figma.skipInvisibleInstanceChildren = true;
+    for (const node of currentPage.findAllWithCriteria({ types: ['SECTION'] })) {
       // First find the sections
-      if (node.type === 'SECTION') {
-        console.log('Traversing ', node.name)
+      console.log('Traversing ', node.name)
+
+      traverseInstanceNodes(node);
+
+      /*
+
+      if ('children' in node) {
         for (const child of node.children) {
-          console.log('Traversing ', child.name)
-          if (child.type === 'FRAME') {
-            for (const grandchild of child.children) {
-              console.log('Traversing ', grandchild.name)
-              if (grandchild.type === 'INSTANCE') {
-                // const libraryName = await getLibraryInfo(node);
-                if (grandchild.mainComponent?.remote) {
-                  let key = grandchild.mainComponent ? (grandchild.mainComponent.parent ? grandchild.mainComponent.parent.name : 'Deleted Parent') : 'Unknown Parent';
-                  // let system = await getLibraryInfo(grandchild);
-                  // if(system){
-                  // incrementCount('components', `${system} - ${key}`);
-                  // } else {
-                  incrementCount('components', key);
-                  // }
-                }
-                else {
-                  totalLocalInstanceCount++;
-                }
-              }
-
-              // Check for color styles
-              if (isFillStrokeNode(grandchild)) {
-                if (grandchild.fillStyleId) {
-                  // Assuming getStyleInfo returns the style's library name
-                  const fillStyleLibrary = await getStyleInfo(grandchild.fillStyleId);
-                  if (fillStyleLibrary) incrementCount('colourStyles', fillStyleLibrary);
-                }
-
-                if (grandchild.strokeStyleId) {
-                  const strokeStyleLibrary = await getStyleInfo(grandchild.strokeStyleId);
-                  if (strokeStyleLibrary) incrementCount('colourStyles', strokeStyleLibrary);
-                }
-              }
-
-              // Check for text styles
-              // if ('textStyleId' in grandchild) {
-              //   if (grandchild.type === 'TEXT' && grandchild.textStyleId) {
-              //     const textStyleLibrary = await getStyleInfo(grandchild.textStyleId);
-              //     if (textStyleLibrary) incrementCount('textStyles', textStyleLibrary);
-              //   }
+          if (child.type === 'INSTANCE') {
+            if (child.mainComponent?.remote) {
+              let key = child.mainComponent ? (child.mainComponent.parent ? child.mainComponent.parent.name : 'Deleted Parent') : 'Unknown Parent';
+              
+              incrementCount('components', key);
               // }
+            }
+            else {
+              totalLocalInstanceCount++;
             }
           }
 
+          // Check for color styles
+
+
+          // Check for text styles
+
         }
-      }
+      }*/
+
 
     }
 
-    setTotalComponentCount(totalLocalInstanceCount + Object.values(librariesCount['components']).reduce((a, b) => a + b, 0));
-    setTotalColourStyleCount(totalColourStyleCount + Object.values(librariesCount['colourStyles']).reduce((a, b) => a + b, 0));
+    setTotalComponentCount(totalComponentCount + Object.values(librariesCount['components']).reduce((a, b) => a + b.count, 0));
+    setLocalComponentsCount(localComponentsCount + Object.values(librariesCount['localComponents']).reduce((a, b) => a + b.count, 0));
+    setTotalColourStyleCount(totalColourStyleCount + Object.values(librariesCount['colourStyles']).reduce((a, b) => a + b.count, 0));
     // setTotalTextStyleCount(totalTextStyleCount + Object.values(librariesCount['textStyles']).reduce((a, b) => a + b, 0));
     setLibraryCounts(librariesCount);
-    setLocalComponentsCount(totalLocalInstanceCount);
 
     console.log(`Library Instance Counts: `, librariesCount);
     console.log(`Total Local Instances: ${totalLocalInstanceCount}`);
-  };
+  }
+
 
 
   usePropertyMenu(
@@ -159,17 +203,39 @@ function Widget() {
     },
   )
 
-  const renderLibraryCounts = (type: 'components' | 'colourStyles' | 'textStyles') => {
-    return Object.entries(libraryCounts[type]).map(([libraryName, count]) => (
-      <AutoLayout key={libraryName} direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
-        <Text fontSize={10} fontFamily="Nunito">{libraryName}</Text>
-        <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right">{`${count}`}</Text>
+  const renderLibraryCounts = (type: 'components' | 'colourStyles' | 'textStyles' | 'localComponents') => {
+
+    const characterLength = 45;
+
+    return Object.entries<Library>(libraryCounts[type]).map(([libraryId, library]) => (
+      <AutoLayout key={libraryId} direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
+        <AutoLayout direction="horizontal" spacing={4} width={'fill-parent'} verticalAlignItems="center">
+          <Text fontSize={10} fontFamily="Nunito" truncate={true} fill={type === 'localComponents' ? '#f00':'#333'}>
+            {libraryId.length > characterLength ? libraryId.slice(0, characterLength) + '..' : libraryId}
+          </Text>
+          <AutoLayout
+            padding={{ vertical: 4, horizontal: 8 }}
+            stroke={'#f3f3f3'}
+            fill={'#fafafa'}
+            strokeWidth={1}
+            horizontalAlignItems={'center'}
+            cornerRadius={14}
+            verticalAlignItems="center"
+            onClick={() => {
+              selectLayersById(library.ids)
+            }}
+          >
+            <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Select</Text>
+          </AutoLayout>
+        </AutoLayout>
+        <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={type === 'localComponents' ? '#f00':'#333'}>{`${library.count}`}</Text>
       </AutoLayout>
     ));
   };
 
   const showCoverage = (type: 'components' | 'colours' | 'text') => {
     if (type === 'components') {
+      console.log(totalComponentCount, localComponentsCount, unknowns)
       const coverage = (totalComponentCount - localComponentsCount - unknowns) / totalComponentCount
       const coverageString = (100 * coverage).toFixed(2)
       return `${coverageString}`;
@@ -230,10 +296,13 @@ function Widget() {
             </Text>
           </AutoLayout>
           {renderLibraryCounts('components')}
-          <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
+          <Text fill={'#f00'} fontSize={12} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🔻 Local Components</Text>
+          {renderLibraryCounts('localComponents')}
+
+          {/* <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
             <Text fontSize={10} fontFamily="Nunito" fill={'#f00'}>Local Components</Text>
             <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={'#f00'}>{localComponentsCount}</Text>
-          </AutoLayout>
+          </AutoLayout> */}
         </AutoLayout>
 
 
@@ -276,5 +345,6 @@ function Widget() {
     </AutoLayout>
   )
 }
+
 
 widget.register(Widget);
