@@ -21,6 +21,69 @@ interface Library {
   count: number;
 }
 
+// Helpers
+function getVariableName(variableId: string) {
+  return figma.variables.getVariableById(variableId)?.name;
+}
+
+const isObjectEmpty = (objectName: any) => {
+  return Object.keys(objectName).length === 0
+}
+
+// Lookup Functions
+function getFillInfo(fillInfo: any) {
+
+  return fillInfo && fillInfo.length && fillInfo.map((f: any) => {
+    let colour;
+
+    if (f.type === 'SOLID') {
+
+      if (f.color) {
+        if (!isObjectEmpty(f.boundVariables) && !isObjectEmpty(f.boundVariables.color) && f.boundVariables.color.type === 'VARIABLE_ALIAS') {
+          colour = getVariableName(f.boundVariables.color.id)
+        } else if (isObjectEmpty(f.boundVariables)) {
+          colour = 'Local Colour'
+        }
+      } else if (isObjectEmpty(f.color)) {
+        colour = 'No Fill'
+      }
+      console.log(`
+        Inferred: ${colour} | color ${JSON.stringify(f.color)}, BV ${JSON.stringify(f.boundVariables)}, BVC ${JSON.stringify(f.boundVariables.color)}
+      `);
+    }
+    return colour;
+  })
+}
+
+function traverseAllNodes(node: BaseNode, library: 'colourStyles' | 'textStyles') {
+  console.log('Traversing --> ', node.name);
+
+  function traverse(node: any) {
+    let count = 0;
+
+    let name = getFillInfo(node.fills);
+    const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
+
+    if(name != 0){
+      if (!librariesCount[library][name]) {
+        count++;
+        librariesCount[library][name] = { count: count, ids: [idToAdd] };
+      } else {
+        librariesCount[library][name].count += 1;
+        librariesCount[library][name].ids.push(idToAdd);
+      }
+    }
+
+    if ('children' in node) {
+      for (const child of node.children) {
+        traverse(child);
+      }
+    }
+
+  }
+  traverse(node);
+}
+
 function traverseInstanceNodes(node: BaseNode) {
   console.log('Traversing --> ', node.name);
 
@@ -146,6 +209,7 @@ function Widget() {
       console.log('Traversing ', node.name)
 
       traverseInstanceNodes(node);
+      traverseAllNodes(node, 'colourStyles');
 
       /*
 
