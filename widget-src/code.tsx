@@ -98,44 +98,38 @@ function Widget() {
     }
     
     function finishProcessing() {
-      // Update all counts at once
-      setTotalComponentCount(
-        totalComponentCount +
-          Object.values(globalLibrariesCount["components"]).reduce(
-            (a: number, b: { count: number; ids: string[] }) => a + b.count,
-            0,
-          ),
+      // Calculate totals before updating state
+      const externalComponentCount = Object.values(globalLibrariesCount["components"]).reduce(
+        (a: number, b: { count: number; ids: string[] }) => a + b.count,
+        0
       );
-      setLocalComponentsCount(
-        localComponentsCount +
-          Object.values(globalLibrariesCount["localComponents"]).reduce(
-            (a: number, b: { count: number; ids: string[] }) => a + b.count,
-            0,
-          ),
+      
+      const localCount = Object.values(globalLibrariesCount["localComponents"]).reduce(
+        (a: number, b: { count: number; ids: string[] }) => a + b.count,
+        0
       );
-      setDetachedComponentsCount(
-        detachedComponentsCount +
-          Object.values(globalLibrariesCount["detachedComponents"]).reduce(
-            (a: number, b: { count: number; ids: string[] }) => a + b.count,
-            0,
-          ),
+      
+      const detachedCount = Object.values(globalLibrariesCount["detachedComponents"]).reduce(
+        (a: number, b: { count: number; ids: string[] }) => a + b.count,
+        0
       );
-      setTotalColourStyleCount(
-        totalColourStyleCount +
-          Object.values(globalLibrariesCount["colourStyles"]).reduce(
-            (a: number, b: { count: number; ids: string[] }) => a + b.count,
-            0,
-          ),
+      
+      const colourStyleCount = Object.values(globalLibrariesCount["colourStyles"]).reduce(
+        (a: number, b: { count: number; ids: string[] }) => a + b.count,
+        0
       );
-      setLibraryCounts(globalLibrariesCount);
+      
+      // Update all counts at once - replacing addition with direct assignment
+      setTotalComponentCount(externalComponentCount);
+      setLocalComponentsCount(localCount);
+      setDetachedComponentsCount(detachedCount);
+      setTotalColourStyleCount(colourStyleCount);
+      setLibraryCounts({...globalLibrariesCount});
 
       console.log(`Library Instance Counts: `, globalLibrariesCount);
-      console.log(`Total Local Instances: ${totalLocalInstanceCount}`);
-      console.log(
-        `Total Detached Instances: ${Object.values(globalLibrariesCount["detachedComponents"]).reduce(
-          (a: number, b: { count: number; ids: string[] }) => a + b.count, 0
-        )}`,
-      );
+      console.log(`Total External Components: ${externalComponentCount}`);
+      console.log(`Total Local Instances: ${localCount}`);
+      console.log(`Total Detached Instances: ${detachedCount}`);
       
       // Set loading state back to false after computation is done
       setIsLoading(false);
@@ -171,16 +165,24 @@ function Widget() {
 
   const showCoverage = (type: "components" | "colours" | "text") => {
     if (type === "components") {
+      // Log current counts for debugging
       console.log(
-        totalComponentCount,
-        localComponentsCount,
-        detachedComponentsCount,
-        unknowns,
+        "Coverage calculation:",
+        "External:", totalComponentCount,
+        "Local:", localComponentsCount,
+        "Detached:", detachedComponentsCount,
+        "Unknowns:", unknowns,
       );
-      const total =
+      
+      // Calculate total components
+      const total = 
         totalComponentCount + localComponentsCount + detachedComponentsCount;
-      const coverage =
-        totalComponentCount > 0 ? totalComponentCount / total : 0;
+      
+      // Calculate coverage as the percentage of external components
+      const coverage = 
+        total > 0 ? totalComponentCount / total : 0;
+      
+      // Format to 2 decimal places
       const coverageString = (100 * coverage).toFixed(2);
       return `${coverageString}`;
     } else return "N/A";
