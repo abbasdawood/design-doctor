@@ -441,10 +441,10 @@ const Widget = () => {
     );
   }
 
-  // Main UI - Two panel layout
+  // Main UI - Redesigned layout with hero component coverage
   return (
     <AutoLayout
-      direction="horizontal"
+      direction="vertical"
       width={1440}
       height={900}
       cornerRadius={16}
@@ -452,109 +452,43 @@ const Widget = () => {
       stroke={'#E6E6E6'}
       overflow="hidden"
     >
-      {/* Left sidebar */}
+      {/* Header with title and controls */}
       <AutoLayout
-        direction="vertical"
-        width={280}
-        height={'fill-parent'}
-        padding={16}
-        spacing={8}
+        direction="horizontal"
+        width={'fill-parent'}
+        padding={24}
+        spacing={'auto'}
+        verticalAlignItems="center"
         fill={'#FAFAFA'}
         stroke={'#E6E6E6'}
         strokeAlign="inside"
       >
-        <AutoLayout
-          horizontalAlignItems={'center'}
-          spacing={'auto'}
-          width={'fill-parent'}
-          verticalAlignItems="center"
-          padding={{bottom: 16}}
-        >
-          <Text fontSize={20} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🩺 Design Doctor</Text>
-        </AutoLayout>
+        <Text fontSize={28} fontFamily="Nunito" fontWeight={'bold'}>🩺 Design Doctor</Text>
         
-        {/* Library Configuration */}
-        <AutoLayout direction="vertical" spacing={8} width={'fill-parent'}>
-          <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
-            <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={14}>Library Configuration</Text>
-            <AutoLayout
-              padding={{vertical:4, horizontal:8}}
-              stroke={'#f3f3f3'}
-              fill={'#fafafa'}
-              strokeWidth={1}
-              horizontalAlignItems={'center'}
-              cornerRadius={14}
-              verticalAlignItems="center"
-              onClick={async () => {
-                await figma.clientStorage.setAsync('approvedComponentKeys', []);
-                const keys = await loadApprovedComponentKeys();
-                setApprovedLibraryKeys(keys);
-              }}>
-              <Text fontSize={12} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Configure</Text>
-            </AutoLayout>
-          </AutoLayout>
-          <Text fontSize={12} fontFamily="Nunito" fill="#666">
-            {approvedLibraryKeys.length} approved component keys loaded
-          </Text>
-        </AutoLayout>
-
-        <Rectangle width={'fill-parent'} height={1} fill={'#E6E6E6'} />
-
-        {/* Navigation menu */}
-        <AutoLayout direction="vertical" spacing={4} width={'fill-parent'}>
-          {renderSidebarItem(
-            'components', 
-            'Components', 
-            `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 8L3.39411 4.60589L6.78822 8L3.39411 11.3941L0 8Z" fill="#C869EF" />
-              <path d="M4.14839 3.85161L7.54248 0.457521L10.9366 3.85161L7.54248 7.2457L4.14839 3.85161Z" fill="#C869EF" />
-              <path d="M8.29663 8L11.6907 4.60589L15.0848 8L11.6907 11.3941L8.29663 8Z" fill="#C869EF" />
-              <path d="M4.14839 12.1484L7.54248 8.75424L10.9366 12.1484L7.54248 15.5425L4.14839 12.1484Z" fill="#C869EF" />
-            </svg>`
-          )}
-          
-          {renderSidebarItem(
-            'localComponents', 
-            'Local Components', 
-            `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 8L3.39411 4.60589L6.78822 8L3.39411 11.3941L0 8Z" fill="#FF5555" />
-              <path d="M4.14839 3.85161L7.54248 0.457521L10.9366 3.85161L7.54248 7.2457L4.14839 3.85161Z" fill="#FF5555" />
-              <path d="M8.29663 8L11.6907 4.60589L15.0848 8L11.6907 11.3941L8.29663 8Z" fill="#FF5555" />
-              <path d="M4.14839 12.1484L7.54248 8.75424L10.9366 12.1484L7.54248 15.5425L4.14839 12.1484Z" fill="#FF5555" />
-            </svg>`
-          )}
-          
-          {renderSidebarItem(
-            'colourStyles', 
-            'Colors', 
-            `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="7.2" height="7.2" fill="#EF8B8B"/>
-              <rect x="8.8" width="7.2" height="7.2" fill="#369EFF"/>
-              <rect x="8.8" y="8.8" width="7.2" height="7.2" fill="#FFB966"/>
-              <rect y="8.8" width="7.2" height="7.2" fill="#66DB9A"/>
-            </svg>`
-          )}
-        </AutoLayout>
-
-        <Rectangle width={'fill-parent'} height={1} fill={'#E6E6E6'} />
-
-        {/* Metrics and controls */}
-        <AutoLayout direction="vertical" spacing={8} width={'fill-parent'}>
-          <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={14}>Metrics</Text>
-          
-          <AutoLayout direction="horizontal" spacing={8} width={'fill-parent'} verticalAlignItems="center">
-            <Text fontFamily="Nunito" fontSize={12}>Components Coverage:</Text>
-            <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>{showCoverage('components')}%</Text>
-          </AutoLayout>
-
+        <AutoLayout direction="horizontal" spacing={16} verticalAlignItems="center">
           <AutoLayout
-            padding={{vertical:8, horizontal:12}}
+            padding={{vertical:8, horizontal:16}}
+            stroke={'#f3f3f3'}
+            fill={'#fafafa'}
+            strokeWidth={1}
+            horizontalAlignItems={'center'}
+            cornerRadius={8}
+            verticalAlignItems="center"
+            onClick={async () => {
+              await figma.clientStorage.setAsync('approvedComponentKeys', []);
+              const keys = await loadApprovedComponentKeys();
+              setApprovedLibraryKeys(keys);
+            }}>
+            <Text fontSize={14} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Configure Libraries</Text>
+          </AutoLayout>
+          
+          <AutoLayout
+            padding={{vertical:8, horizontal:16}}
             stroke={'#f3f3f3'}
             fill={'#C869EF'}
             strokeWidth={1}
             horizontalAlignItems={'center'}
             cornerRadius={8}
-            width={'fill-parent'}
             verticalAlignItems="center"
             onClick={() => {
               countStuffOnCurrentPage()
@@ -563,53 +497,116 @@ const Widget = () => {
           </AutoLayout>
         </AutoLayout>
       </AutoLayout>
-
-      {/* Right content panel */}
-      <ScrollableRegion 
-        width={'fill-parent'} 
-        height={'fill-parent'}
+      
+      {/* Hero section with component coverage */}
+      <AutoLayout
         direction="vertical"
+        width={'fill-parent'}
+        padding={48}
+        spacing={24}
+        horizontalAlignItems="center"
+        fill={'#F8F5FF'}
+      >
+        <Text fontSize={18} fontFamily="Nunito" fill="#666">Components Coverage</Text>
+        <Text fontSize={72} fontFamily="Nunito" fontWeight={'bold'} fill="#C869EF">{showCoverage('components')}%</Text>
+        <Text fontSize={16} fontFamily="Nunito" fill="#666">
+          {approvedLibraryKeys.length} approved component keys loaded
+        </Text>
+      </AutoLayout>
+      
+      {/* Navigation tabs */}
+      <AutoLayout
+        direction="horizontal"
+        width={'fill-parent'}
+        padding={{horizontal: 32, vertical: 0}}
+        spacing={8}
+        fill={'#FFFFFF'}
       >
         <AutoLayout
-          direction="vertical"
-          padding={32}
-          spacing={24}
-          width={'fill-parent'}
-          height={'hug-contents'}
+          padding={{vertical: 16, horizontal: 24}}
+          fill={activeSection === 'components' ? '#F0F0F5' : 'transparent'}
+          cornerRadius={{topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0}}
+          onClick={() => setActiveSection('components')}
+          hoverStyle={{fill: '#F0F0F5'}}
         >
-          {/* Panel header */}
-          <AutoLayout direction="vertical" spacing={8} width={'fill-parent'}>
-            <Text fontSize={24} fontFamily="Nunito" fontWeight={'bold'}>
-              {activeSection === 'components' ? 'Remote Components' : 
-               activeSection === 'localComponents' ? 'Local Components' : 'Color Styles'}
-            </Text>
-            <Text fontSize={14} fontFamily="Nunito" fill="#666">
-              {activeSection === 'components' ? 
-                `${Object.keys(libraryCounts.components).length} unique remote components found` : 
-               activeSection === 'localComponents' ? 
-                `${Object.keys(libraryCounts.localComponents).length} unique local components found` : 
-                `${Object.keys(libraryCounts.colourStyles).length} unique color styles found`}
-            </Text>
-          </AutoLayout>
-
-          {/* Section for list headers */}
-          <AutoLayout 
-            direction="horizontal" 
-            spacing={'auto'} 
-            width={'fill-parent'} 
-            padding={{horizontal: 12, vertical: 8}}
-            verticalAlignItems="center"
-          >
-            <Text fontSize={12} fontFamily="Nunito" fontWeight={'bold'} fill="#666" width={260}>Name</Text>
-            <Text fontSize={12} fontFamily="Nunito" fontWeight={'bold'} fill="#666">Count</Text>
-          </AutoLayout>
-          
-          {/* Component list */}
-          <AutoLayout direction="vertical" spacing={4} width={'fill-parent'}>
-            {renderLibraryCounts(activeSection as any)}
-          </AutoLayout>
+          <Text fontSize={16} fontFamily="Nunito" fontWeight={activeSection === 'components' ? 'bold' : 'normal'}>
+            Remote Components
+          </Text>
         </AutoLayout>
-      </ScrollableRegion>
+        
+        <AutoLayout
+          padding={{vertical: 16, horizontal: 24}}
+          fill={activeSection === 'localComponents' ? '#F0F0F5' : 'transparent'}
+          cornerRadius={{topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0}}
+          onClick={() => setActiveSection('localComponents')}
+          hoverStyle={{fill: '#F0F0F5'}}
+        >
+          <Text fontSize={16} fontFamily="Nunito" fontWeight={activeSection === 'localComponents' ? 'bold' : 'normal'}>
+            Local Components
+          </Text>
+        </AutoLayout>
+        
+        <AutoLayout
+          padding={{vertical: 16, horizontal: 24}}
+          fill={activeSection === 'colourStyles' ? '#F0F0F5' : 'transparent'}
+          cornerRadius={{topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0}}
+          onClick={() => setActiveSection('colourStyles')}
+          hoverStyle={{fill: '#F0F0F5'}}
+        >
+          <Text fontSize={16} fontFamily="Nunito" fontWeight={activeSection === 'colourStyles' ? 'bold' : 'normal'}>
+            Color Styles
+          </Text>
+        </AutoLayout>
+      </AutoLayout>
+      
+      <Rectangle width={'fill-parent'} height={1} fill={'#E6E6E6'} />
+      
+      {/* Content area */}
+      <AutoLayout
+        direction="vertical"
+        width={'fill-parent'}
+        height={'fill-parent'}
+        padding={32}
+        spacing={24}
+      >
+        {/* Section header */}
+        <AutoLayout direction="horizontal" spacing={8} width={'fill-parent'} verticalAlignItems="center">
+          <Text fontSize={20} fontFamily="Nunito" fontWeight={'bold'}>
+            {activeSection === 'components' ? 'Remote Components' : 
+             activeSection === 'localComponents' ? 'Local Components' : 'Color Styles'}
+          </Text>
+          <Text fontSize={14} fontFamily="Nunito" fill="#666">
+            {activeSection === 'components' ? 
+              `(${Object.keys(libraryCounts.components).length} unique)` : 
+             activeSection === 'localComponents' ? 
+              `(${Object.keys(libraryCounts.localComponents).length} unique)` : 
+              `(${Object.keys(libraryCounts.colourStyles).length} unique)`}
+          </Text>
+        </AutoLayout>
+        
+        {/* Columns header */}
+        <AutoLayout 
+          direction="horizontal" 
+          spacing={'auto'} 
+          width={'fill-parent'} 
+          padding={{horizontal: 12, vertical: 8}}
+          verticalAlignItems="center"
+        >
+          <Text fontSize={14} fontFamily="Nunito" fontWeight={'bold'} fill="#666" width={260}>Name</Text>
+          <Text fontSize={14} fontFamily="Nunito" fontWeight={'bold'} fill="#666">Count</Text>
+        </AutoLayout>
+        
+        {/* Component list - with columns layout */}
+        <AutoLayout 
+          direction="vertical" 
+          spacing={4} 
+          width={'fill-parent'} 
+          height={'fill-parent'} 
+          padding={{bottom: 32}}
+        >
+          {renderLibraryCounts(activeSection as any)}
+        </AutoLayout>
+      </AutoLayout>
     </AutoLayout>
   );
 }
