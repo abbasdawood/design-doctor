@@ -1,4 +1,4 @@
-const { widget } = figma;
+import { widget } from "figma";
 const { useSyncedState, usePropertyMenu, AutoLayout } = widget;
 
 import { LibrariesCount } from "./types";
