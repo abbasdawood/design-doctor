@@ -59,12 +59,12 @@ function getFillInfo(fillInfo: any) {
           colour =
             getVariableName(f.boundVariables.color.id) || "Unknown Variable";
         }
-        // If valid color property exists
+        // If valid color property exists - ensure they're not NaN
         else if (
           f.color &&
-          typeof f.color.r === "number" &&
-          typeof f.color.g === "number" &&
-          typeof f.color.b === "number"
+          typeof f.color.r === "number" && !isNaN(f.color.r) &&
+          typeof f.color.g === "number" && !isNaN(f.color.g) &&
+          typeof f.color.b === "number" && !isNaN(f.color.b)
         ) {
           colour = "Local Colour";
         }
