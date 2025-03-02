@@ -80,10 +80,10 @@ function Widget() {
       types: ["SECTION"],
     });
     
-    // Process all sections immediately (original approach)
+    // Process all sections with await for async traversal
     for (const section of sections) {
       console.log("Traversing ", section.name);
-      traverseInstanceNodes(section);
+      await traverseInstanceNodes(section);
       traverseAllNodes(section, "colourStyles");
     }
     

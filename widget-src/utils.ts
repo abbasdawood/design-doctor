@@ -66,14 +66,17 @@ export function traverseAllNodes(node: BaseNode, library: 'colourStyles' | 'text
   }
 }
 
-export function traverseInstanceNodes(node: BaseNode) {
+export async function traverseInstanceNodes(node: BaseNode) {
   console.log('Traversing --> ', node.name);
   
   if (node.type === 'INSTANCE') {
     const idToAdd = node.id || '';
     
+    // Use getMainComponentAsync instead of directly accessing mainComponent
+    const mainComponent = await node.getMainComponentAsync();
+    
     // Check if the component is detached
-    if (node.mainComponent?.parent === null && node.masterComponent?.detached) {
+    if (mainComponent?.parent === null && node.masterComponent?.detached) {
       let name = 'Detached Component';
       if (!librariesCount['detachedComponents'][name]) {
         librariesCount['detachedComponents'][name] = { count: 1, ids: [idToAdd] };
@@ -83,11 +86,11 @@ export function traverseInstanceNodes(node: BaseNode) {
       }
     } 
     // Check if it's from an external library
-    else if (node.mainComponent?.remote) {
+    else if (mainComponent?.remote) {
       // For external components, use library name + component name
-      let libraryName = node.mainComponent?.remote ? 
-        node.mainComponent.parent?.name || 'Unknown Library' : 'Local Library';
-      let name = node.mainComponent?.name || 'Unknown Component';
+      let libraryName = mainComponent?.remote ? 
+        mainComponent.parent?.name || 'Unknown Library' : 'Local Library';
+      let name = mainComponent?.name || 'Unknown Component';
       let fullName = `${libraryName} / ${name}`;
       
       if (!librariesCount['components'][fullName]) {
@@ -99,7 +102,7 @@ export function traverseInstanceNodes(node: BaseNode) {
     } 
     // If not detached and not from external library, it's a local component
     else {
-      let name = node.mainComponent?.name || 'Unknown Local Component';
+      let name = mainComponent?.name || 'Unknown Local Component';
       if (!librariesCount['localComponents'][name]) {
         librariesCount['localComponents'][name] = { count: 1, ids: [idToAdd] };
       } else {
@@ -112,7 +115,7 @@ export function traverseInstanceNodes(node: BaseNode) {
   // We still need to traverse children (unless it's an INSTANCE)
   if ('children' in node && node.type !== 'INSTANCE') {
     for (const child of node.children) {
-      traverseInstanceNodes(child);
+      await traverseInstanceNodes(child);
     }
   }
 }
