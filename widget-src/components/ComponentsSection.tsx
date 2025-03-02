@@ -27,54 +27,37 @@ export function ComponentsSection(props: ComponentsSectionProps) {
         return countDiff !== 0 ? countDiff : a[0].localeCompare(b[0]);
       });
     
-    // For external components, group by library
+    // For external components, directly list them
     if (type === 'components') {
-      // Group by library name (before the "/" character)
-      const groupedByLibrary: Record<string, {name: string, components: [string, Library][]}> = {};
-      
-      sortedEntries.forEach(([fullName, library]) => {
+      return sortedEntries.map(([fullName, library]) => {
         const parts = fullName.split(' / ');
         const libraryName = parts[0];
+        const componentName = parts[1] || fullName;
         
-        if (!groupedByLibrary[libraryName]) {
-          groupedByLibrary[libraryName] = {
-            name: libraryName,
-            components: []
-          };
-        }
-        
-        groupedByLibrary[libraryName].components.push([fullName, library]);
+        return (
+          <AutoLayout 
+            key={fullName} 
+            direction="horizontal" 
+            spacing={'auto'} 
+            width={'fill-parent'} 
+            verticalAlignItems="center"
+            padding={{ vertical: 4, horizontal: 8 }}
+            hoverStyle={{ fill: '#f5f5f5' }}
+            cornerRadius={4}
+            onClick={() => selectLayersById(library.ids)}
+          >
+            <AutoLayout direction="vertical" spacing={0}>
+              <Text fontSize={10} fontFamily="Nunito" truncate={true} fill={textColor}>
+                {componentName.length > characterLength ? componentName.slice(0, characterLength) + '..' : componentName}
+              </Text>
+              <Text fontSize={8} fontFamily="Nunito" fill="#666">
+                {libraryName}
+              </Text>
+            </AutoLayout>
+            <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={textColor}>{`${library.count}`}</Text>
+          </AutoLayout>
+        );
       });
-      
-      // Convert grouped libraries to component entries
-      return Object.values(groupedByLibrary).map(group => (
-        <AutoLayout key={group.name} direction="vertical" spacing={4} width={'fill-parent'}>
-          <Text fontSize={10} fontFamily="Nunito" fill="#666" fontWeight="bold">{group.name}</Text>
-          
-          {group.components.map(([fullName, library]) => {
-            const componentName = fullName.split(' / ')[1] || fullName;
-            
-            return (
-              <AutoLayout 
-                key={fullName} 
-                direction="horizontal" 
-                spacing={'auto'} 
-                width={'fill-parent'} 
-                verticalAlignItems="center"
-                padding={{ vertical: 4, horizontal: 8 }}
-                hoverStyle={{ fill: '#f5f5f5' }}
-                cornerRadius={4}
-                onClick={() => selectLayersById(library.ids)}
-              >
-                <Text fontSize={10} fontFamily="Nunito" truncate={true} fill={textColor}>
-                  {componentName.length > characterLength ? componentName.slice(0, characterLength) + '..' : componentName}
-                </Text>
-                <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={textColor}>{`${library.count}`}</Text>
-              </AutoLayout>
-            );
-          })}
-        </AutoLayout>
-      ));
     } else {
       // For local and detached components, just display the sorted list
       return sortedEntries.map(([name, library]) => (
