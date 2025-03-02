@@ -64,7 +64,7 @@ function traverseAllNodes(node: BaseNode, library: 'colourStyles' | 'textStyles'
     let name = getFillInfo(node.fills);
     const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
 
-    if(name != 0){
+    if (name != 0) {
       if (!librariesCount[library][name]) {
         count++;
         librariesCount[library][name] = { count: count, ids: [idToAdd] };
@@ -104,7 +104,7 @@ function traverseInstanceNodes(node: BaseNode) {
       let count = 0;
       let localCount = 0;
 
-      let name = node.masterComponent.detached? 'Detached Parent' : (node.mainComponent?.parent?.name || node.mainComponent.name);
+      let name = node.masterComponent.detached ? 'Detached Parent' : (node.mainComponent?.parent?.name || node.mainComponent.name);
       const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
 
       if (node.mainComponent.remote) {
@@ -182,7 +182,7 @@ function Widget() {
   const [totalColourStyleCount, setTotalColourStyleCount] = useSyncedState('totalColourStyleCount', 0);
   // const [totalTextStyleCount, setTotalTextStyleCount] = useSyncedState('totalTextStyleCount', 0);
 
-  const [libraryCounts, setLibraryCounts] = useSyncedState('libraryCounts', { components: {}, colourStyles: {}, textStyles: {} , localComponents:{}});
+  const [libraryCounts, setLibraryCounts] = useSyncedState('libraryCounts', { components: {}, colourStyles: {}, textStyles: {}, localComponents: {} });
   const [localComponentsCount, setLocalComponentsCount] = useSyncedState('localComponentsCount', 0);
 
   const [unknowns, setUnknowns] = useSyncedState('unknowns', 0);
@@ -274,7 +274,7 @@ function Widget() {
     return Object.entries<Library>(libraryCounts[type]).map(([libraryId, library]) => (
       <AutoLayout key={libraryId} direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
         <AutoLayout direction="horizontal" spacing={4} width={'fill-parent'} verticalAlignItems="center">
-          <Text fontSize={10} fontFamily="Nunito" truncate={true} fill={type === 'localComponents' ? '#f00':'#333'}>
+          <Text fontSize={10} fontFamily="Nunito" truncate={true} fill={type === 'localComponents' ? '#f00' : '#333'}>
             {libraryId.length > characterLength ? libraryId.slice(0, characterLength) + '..' : libraryId}
           </Text>
           <AutoLayout
@@ -292,7 +292,7 @@ function Widget() {
             <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Select</Text>
           </AutoLayout>
         </AutoLayout>
-        <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={type === 'localComponents' ? '#f00':'#333'}>{`${library.count}`}</Text>
+        <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={type === 'localComponents' ? '#f00' : '#333'}>{`${library.count}`}</Text>
       </AutoLayout>
     ));
   };
@@ -328,26 +328,26 @@ function Widget() {
         padding={16}
         width={180}
         height={'fill-parent'}
-        verticalAlignItems={'center'}
+        verticalAlignItems={'start'}
         horizontalAlignItems={'center'}
         fill={'#f9f9f9'}
         cornerRadius={8}
       >
         <Text fontSize={18} horizontalAlignText={'center'} fontFamily="Nunito" fontWeight={'bold'}>🩺 Design Doctor</Text>
-        
+
         <AutoLayout
           direction="vertical"
           spacing={4}
           verticalAlignItems={'center'}
           horizontalAlignItems={'center'}
-          padding={{top: 16, bottom: 16}}
+          padding={{ top: 16, bottom: 16 }}
         >
           <Text fontSize={10} fontFamily="Nunito">Components Coverage</Text>
           <Text fontSize={48} fontFamily="Nunito" fontWeight={'bold'} fill={'#C869EF'}>
             {showCoverage('components')}%
           </Text>
           <AutoLayout
-            padding={{vertical:4, horizontal:8}}
+            padding={{ vertical: 4, horizontal: 8 }}
             stroke={'#f3f3f3'}
             fill={'#fafafa'}
             strokeWidth={1}
@@ -363,10 +363,10 @@ function Widget() {
       </AutoLayout>
 
       {/* Details section */}
-      <AutoLayout direction="vertical" spacing={16} width={320}>
+      <AutoLayout direction="horizontal" spacing={16} width={1040}>
         <AutoLayout
-          direction="vertical" 
-          width={'fill-parent'} 
+          direction="vertical"
+          width={'fill-parent'}
           spacing={10}
         >
           <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
@@ -382,11 +382,30 @@ function Widget() {
             </AutoLayout>
           </AutoLayout>
           {renderLibraryCounts('components')}
-          <Text fill={'#f00'} fontSize={12} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🔻 Local Components</Text>
+
+        </AutoLayout>
+
+        <AutoLayout 
+          direction="vertical" 
+          width={'fill-parent'} 
+          spacing={10} 
+          >
+          <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
+            <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
+              <SVG src={`
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 5.99999L2.54558 3.45441L5.09117 5.99999L2.54558 8.54558L0 5.99999Z" fill="#f00" />
+              <path d="M3.11128 2.88872L5.65686 0.34314L8.20245 2.88872L5.65686 5.43431L3.11128 2.88872Z" fill="#f00" />
+              <path d="M6.22252 5.99999L8.76811 3.45441L11.3137 5.99999L8.76811 8.54558L6.22252 5.99999Z" fill="#f00" />
+              <path d="M3.11128 9.11126L5.65686 6.56568L8.20245 9.11126L5.65686 11.6568L3.11128 9.11126Z" fill="#f00" />
+            </svg>`}></SVG>
+              <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12} fill={'#f00'}>Local Components</Text>
+            </AutoLayout>
+          </AutoLayout>
           {renderLibraryCounts('localComponents')}
         </AutoLayout>
 
-        <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
+        <AutoLayout direction="vertical" spacing={10} width={'fill-parent'} padding={16}>
           <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
             <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
               <SVG src={`
