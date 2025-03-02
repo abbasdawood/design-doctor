@@ -7,13 +7,13 @@ interface ComponentsSectionProps {
   title: string;
   type: 'components' | 'localComponents' | 'detachedComponents';
   data: Record<string, Library>;
-  iconColor: string;
+  iconColor?: string;
   textColor?: string;
   selectLayersById: (ids: string[]) => void;
 }
 
 export function ComponentsSection(props: ComponentsSectionProps) {
-  const { title, type, data, iconColor, textColor = '#333', selectLayersById } = props;
+  const { title, type, data, iconColor = '#C869EF', textColor = '#333', selectLayersById } = props;
   
   const renderLibraryCounts = () => {
     const characterLength = 45;
@@ -27,15 +27,31 @@ export function ComponentsSection(props: ComponentsSectionProps) {
         return countDiff !== 0 ? countDiff : a[0].localeCompare(b[0]);
       });
     
-    // For external components, directly list them grouped by library
+    // For external components and colors, directly list them grouped by library
     if (type === 'components') {
       // Group by library name
       const groupedByLibrary: Record<string, {name: string, components: [string, Library][]}> = {};
       
       sortedEntries.forEach(([fullName, library]) => {
-        const parts = fullName.split(' / ');
-        const libraryName = parts[0];
-        const componentName = parts[1] || fullName;
+        let libraryName, componentName;
+        
+        if (title === "Colours") {
+          // For colors, we might not have the standard format
+          if (fullName.includes(' / ')) {
+            const parts = fullName.split(' / ');
+            libraryName = parts[0];
+            componentName = parts[1];
+          } else {
+            // If no library separator, assume it's a local color or variable
+            libraryName = fullName === "Local Colour" ? "Local Colors" : "Color Variables";
+            componentName = fullName;
+          }
+        } else {
+          // Standard component format
+          const parts = fullName.split(' / ');
+          libraryName = parts[0];
+          componentName = parts[1] || fullName;
+        }
         
         if (!groupedByLibrary[libraryName]) {
           groupedByLibrary[libraryName] = {
@@ -107,7 +123,13 @@ export function ComponentsSection(props: ComponentsSectionProps) {
     >
       <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
         <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
-          <SVG src={`
+          <SVG src={title === "Colours" ? `
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="5.4" height="5.4" fill="${iconColor}" />
+              <rect x="6.6" width="5.4" height="5.4" fill="${iconColor}" opacity="0.7" />
+              <rect x="6.6" y="6.6" width="5.4" height="5.4" fill="${iconColor}" opacity="0.4" />
+              <rect y="6.6" width="5.4" height="5.4" fill="${iconColor}" opacity="0.2" />
+            </svg>` : `
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M0 5.99999L2.54558 3.45441L5.09117 5.99999L2.54558 8.54558L0 5.99999Z" fill="${iconColor}" />
               <path d="M3.11128 2.88872L5.65686 0.34314L8.20245 2.88872L5.65686 5.43431L3.11128 2.88872Z" fill="${iconColor}" />

@@ -11,7 +11,6 @@ import {
 } from "./utils";
 import { HeroSection } from "./components/HeroSection";
 import { ComponentsSection } from "./components/ComponentsSection";
-import { ColourSection } from "./components/ColourSection";
 
 function Widget() {
   const [totalComponentCount, setTotalComponentCount] = useSyncedState(
@@ -181,6 +180,7 @@ function Widget() {
           title="Colours"
           type="components"
           data={libraryCounts.colourStyles}
+          iconColor="#66DB9A"
           selectLayersById={selectLayersById}
         />
       </AutoLayout>
