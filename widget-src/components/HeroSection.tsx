@@ -1,6 +1,5 @@
 
-import { widget } from "figma";
-const { AutoLayout, Text } = widget;
+const { AutoLayout, Text } = figma.widget;
 
 interface HeroSectionProps {
   coverage: string;
@@ -49,5 +48,5 @@ export function HeroSection(props: HeroSectionProps) {
         </AutoLayout>
       </AutoLayout>
     </AutoLayout>
-  )
+  );
 }
