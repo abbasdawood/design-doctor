@@ -170,7 +170,9 @@ function Widget() {
           textColor="#FF9900"
           selectLayersById={selectLayersById}
         />
-        <ColourSection
+        <ComponentsSection
+          title="Colours"
+          type="components"
           data={libraryCounts.colourStyles}
           selectLayersById={selectLayersById}
         />
