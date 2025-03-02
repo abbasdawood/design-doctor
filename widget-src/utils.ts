@@ -11,8 +11,9 @@ export let librariesCount: LibrariesCount = {
 };
 
 // Helpers
-export function getVariableName(variableId: string) {
-  return figma.variables.getVariableById(variableId)?.name;
+export async function getVariableName(variableId: string) {
+  const variable = await figma.variables.getVariableByIdAsync(variableId);
+  return variable?.name;
 }
 
 export const isObjectEmpty = (objectName: any) => {
@@ -20,48 +21,60 @@ export const isObjectEmpty = (objectName: any) => {
 }
 
 // Lookup Functions
-export function getFillInfo(fillInfo: any) {
-  return fillInfo && fillInfo.length && fillInfo.map((f: any) => {
+export async function getFillInfo(fillInfo: any) {
+  if (!fillInfo || !fillInfo.length) return [];
+  
+  // Process fills sequentially with async/await
+  const results = [];
+  for (const f of fillInfo) {
     let colour;
 
     if (f.type === 'SOLID') {
       if (f.color) {
         if (!isObjectEmpty(f.boundVariables) && !isObjectEmpty(f.boundVariables.color) && f.boundVariables.color.type === 'VARIABLE_ALIAS') {
-          colour = getVariableName(f.boundVariables.color.id)
+          colour = await getVariableName(f.boundVariables.color.id);
         } else if (isObjectEmpty(f.boundVariables)) {
-          colour = 'Local Colour'
+          colour = 'Local Colour';
         }
       } else if (isObjectEmpty(f.color)) {
-        colour = 'No Fill'
+        colour = 'No Fill';
       }
       console.log(`
         Inferred: ${colour} | color ${JSON.stringify(f.color)}, BV ${JSON.stringify(f.boundVariables)}, BVC ${JSON.stringify(f.boundVariables.color)}
       `);
     }
-    return colour;
-  })
+    results.push(colour);
+  }
+  return results;
 }
 
-export function traverseAllNodes(node: BaseNode, library: 'colourStyles' | 'textStyles') {
+export async function traverseAllNodes(node: BaseNode, library: 'colourStyles' | 'textStyles') {
   console.log('Traversing --> ', node.name);
   
-  // Process the current node
-  let name = getFillInfo(node.fills);
-  const idToAdd = node.id || '';
-  
-  if (name != 0) {
-    if (!librariesCount[library][name]) {
-      librariesCount[library][name] = { count: 1, ids: [idToAdd] };
-    } else {
-      librariesCount[library][name].count += 1;
-      librariesCount[library][name].ids.push(idToAdd);
+  // Process the current node if it has fills
+  if ('fills' in node) {
+    // Get fill info asynchronously
+    const names = await getFillInfo(node.fills);
+    const idToAdd = node.id || '';
+    
+    if (names && names.length > 0) {
+      for (const name of names) {
+        if (name) {
+          if (!librariesCount[library][name]) {
+            librariesCount[library][name] = { count: 1, ids: [idToAdd] };
+          } else {
+            librariesCount[library][name].count += 1;
+            librariesCount[library][name].ids.push(idToAdd);
+          }
+        }
+      }
     }
   }
   
   // If node has children, process them
   if ('children' in node) {
     for (const child of node.children) {
-      traverseAllNodes(child, library);
+      await traverseAllNodes(child, library);
     }
   }
 }

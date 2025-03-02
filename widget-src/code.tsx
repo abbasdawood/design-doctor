@@ -85,13 +85,13 @@ function Widget() {
     if (sections.length === 0) {
       console.log("No sections found, analyzing the whole page");
       await traverseInstanceNodes(currentPage);
-      traverseAllNodes(currentPage, "colourStyles");
+      await traverseAllNodes(currentPage, "colourStyles");
     } else {
       // Process all sections with await for async traversal
       for (const section of sections) {
         console.log("Traversing ", section.name);
         await traverseInstanceNodes(section);
-        traverseAllNodes(section, "colourStyles");
+        await traverseAllNodes(section, "colourStyles");
       }
     }
     
