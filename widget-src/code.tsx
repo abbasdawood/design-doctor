@@ -548,7 +548,7 @@ const Widget = () => {
               cornerRadius={4}
             >
               <AutoLayout
-                width={`${(progress.current / Math.max(progress.total, 1)) * 100}%`}
+                width={(progress.current / Math.max(progress.total, 1)) * 100}
                 height={8}
                 fill="#C869EF"
                 cornerRadius={4}
