@@ -49,6 +49,33 @@ export function HeroSection(props: HeroSectionProps) {
     onRunAgain();
   };
 
+  // Determine colors based on coverage percentage
+  const getCoverageStyles = () => {
+    const coverageNum = parseFloat(coverage);
+    
+    if (coverageNum >= 80) {
+      return {
+        textColor: "#1D8A4B", // Dark green
+        backgroundColor: "#E6F5EC", // Light green background
+        iconColor: "#4CAF50"
+      };
+    } else if (coverageNum >= 30) {
+      return {
+        textColor: "#CD8D00", // Dark yellow
+        backgroundColor: "#FFF8E5", // Light yellow background
+        iconColor: "#F5B000"
+      };
+    } else {
+      return {
+        textColor: "#D13438", // Dark red
+        backgroundColor: "#FDEEEE", // Light red background
+        iconColor: "#E74C3C"
+      };
+    }
+  };
+
+  const { textColor, backgroundColor, iconColor } = getCoverageStyles();
+
   return (
     <AutoLayout
       direction="vertical"
@@ -58,7 +85,7 @@ export function HeroSection(props: HeroSectionProps) {
       height={"fill-parent"}
       verticalAlignItems={"start"}
       horizontalAlignItems={"center"}
-      fill={"#f9f9f9"}
+      fill={isLoading ? "#f9f9f9" : backgroundColor}
       cornerRadius={8}
     >
       <Text
@@ -112,14 +139,14 @@ export function HeroSection(props: HeroSectionProps) {
           </AutoLayout>
         ) : (
           <>
-            <Text fontSize={10} fontFamily="Nunito">
+            <Text fontSize={10} fontFamily="Nunito" fill={textColor}>
               Components Coverage
             </Text>
             <Text
               fontSize={48}
               fontFamily="Nunito"
               fontWeight={"bold"}
-              fill={"#C869EF"}
+              fill={textColor}
             >
               {coverage}%
             </Text>
@@ -128,8 +155,8 @@ export function HeroSection(props: HeroSectionProps) {
 
         <AutoLayout
           padding={{ vertical: 4, horizontal: 8 }}
-          stroke={"#f3f3f3"}
-          fill={"#fafafa"}
+          stroke={isLoading ? "#f3f3f3" : backgroundColor}
+          fill={isLoading ? "#fafafa" : "#FFFFFF"}
           strokeWidth={1}
           horizontalAlignItems={"center"}
           cornerRadius={14}
@@ -138,7 +165,7 @@ export function HeroSection(props: HeroSectionProps) {
         >
           <Text
             fontSize={10}
-            fill={"#000"}
+            fill={isLoading ? "#000" : textColor}
             horizontalAlignText="center"
             fontFamily="Nunito"
           >
