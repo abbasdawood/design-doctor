@@ -4,6 +4,7 @@ const { useSyncedState, usePropertyMenu, AutoLayout, Text, SVG } = widget
 interface LibrariesCount {
   components: Record<string, { count: number; ids: string[] }>;
   localComponents: Record<string, { count: number; ids: string[] }>;
+  detachedComponents: Record<string, { count: number; ids: string[] }>;
   colourStyles: Record<string, { count: number; ids: string[] }>;
   textStyles: Record<string, { count: number; ids: string[] }>;
 }
@@ -11,6 +12,7 @@ interface LibrariesCount {
 let librariesCount: LibrariesCount = {
   components: {},
   localComponents: {},
+  detachedComponents: {},
   colourStyles: {},
   textStyles: {}
 };
@@ -95,27 +97,46 @@ function traverseInstanceNodes(node: BaseNode) {
            Node type --> ${node.type}\n 
            Node Parent Type --> ${node.parent?.type}\n 
            Node Main Component --> ${node.mainComponent}\n
-           Node Main Component Name --> ${node.mainComponent.name}\n
-           Node Main Component Parent --> ${node.mainComponent.parent}\n
-           Node Main Component Parent Name --> ${node.mainComponent.parent?.name}\n
+           Node Main Component Name --> ${node.mainComponent?.name}\n
+           Node Main Component Parent --> ${node.mainComponent?.parent}\n
+           Node Main Component Parent Name --> ${node.mainComponent?.parent?.name}\n
            Node Main Component Remote --> ${node.mainComponent?.remote}`
       );
 
       let count = 0;
       let localCount = 0;
-
-      let name = node.masterComponent.detached ? 'Detached Parent' : (node.mainComponent?.parent?.name || node.mainComponent.name);
+      let detachedCount = 0;
       const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
 
-      if (node.mainComponent.remote) {
-        if (!librariesCount['components'][name]) {
-          count++;
-          librariesCount['components'][name] = { count: count, ids: [idToAdd] };
+      // Check if the component is detached
+      if (node.mainComponent?.parent === null && node.masterComponent?.detached) {
+        let name = 'Detached Component';
+        if (!librariesCount['detachedComponents'][name]) {
+          detachedCount++;
+          librariesCount['detachedComponents'][name] = { count: detachedCount, ids: [idToAdd] };
         } else {
-          librariesCount['components'][name].count += 1;
-          librariesCount['components'][name].ids.push(idToAdd);
+          librariesCount['detachedComponents'][name].count += 1;
+          librariesCount['detachedComponents'][name].ids.push(idToAdd);
         }
-      } else {
+      } 
+      // Check if it's from an external library
+      else if (node.mainComponent?.remote) {
+        // For external components, use library name + component name
+        let libraryName = node.mainComponent?.remote ? node.mainComponent.parent?.name || 'Unknown Library' : 'Local Library';
+        let name = node.mainComponent?.name || 'Unknown Component';
+        let fullName = `${libraryName} / ${name}`;
+        
+        if (!librariesCount['components'][fullName]) {
+          count++;
+          librariesCount['components'][fullName] = { count: count, ids: [idToAdd] };
+        } else {
+          librariesCount['components'][fullName].count += 1;
+          librariesCount['components'][fullName].ids.push(idToAdd);
+        }
+      } 
+      // If not detached and not from external library, it's a local component
+      else {
+        let name = node.mainComponent?.name || 'Unknown Local Component';
         if (!librariesCount['localComponents'][name]) {
           localCount++;
           librariesCount['localComponents'][name] = { count: localCount, ids: [idToAdd] };
@@ -124,21 +145,7 @@ function traverseInstanceNodes(node: BaseNode) {
           librariesCount['localComponents'][name].ids.push(idToAdd);
         }
       }
-
-      // if (!librariesCount[library][name]) {
-      //   count++;
-      //   librariesCount[library][name] = { count: count, ids: [idToAdd] };
-      // } else {
-      //   librariesCount[library][name].count += 1;
-      //   librariesCount[library][name].ids.push(idToAdd);
-      // }
     }
-
-    // we need to filter out:
-    // Node type == Instance, Main component !== undefined
-
-    // Recursively traverse child nodes
-
 
     // Traverse all nodes, except for when its an INSTANCE of a COMPONENT
     if ('children' in node && node.type !== 'INSTANCE') {
@@ -156,6 +163,7 @@ function resetCounter() {
   librariesCount = {
     components: {},
     localComponents: {},
+    detachedComponents: {},
     colourStyles: {},
     textStyles: {}
   };
@@ -182,8 +190,15 @@ function Widget() {
   const [totalColourStyleCount, setTotalColourStyleCount] = useSyncedState('totalColourStyleCount', 0);
   // const [totalTextStyleCount, setTotalTextStyleCount] = useSyncedState('totalTextStyleCount', 0);
 
-  const [libraryCounts, setLibraryCounts] = useSyncedState('libraryCounts', { components: {}, colourStyles: {}, textStyles: {}, localComponents: {} });
+  const [libraryCounts, setLibraryCounts] = useSyncedState('libraryCounts', { 
+    components: {}, 
+    colourStyles: {}, 
+    textStyles: {}, 
+    localComponents: {},
+    detachedComponents: {} 
+  });
   const [localComponentsCount, setLocalComponentsCount] = useSyncedState('localComponentsCount', 0);
+  const [detachedComponentsCount, setDetachedComponentsCount] = useSyncedState('detachedComponentsCount', 0);
 
   const [unknowns, setUnknowns] = useSyncedState('unknowns', 0);
   let uk = 0;
@@ -240,12 +255,14 @@ function Widget() {
 
     setTotalComponentCount(totalComponentCount + Object.values(librariesCount['components']).reduce((a, b) => a + b.count, 0));
     setLocalComponentsCount(localComponentsCount + Object.values(librariesCount['localComponents']).reduce((a, b) => a + b.count, 0));
+    setDetachedComponentsCount(detachedComponentsCount + Object.values(librariesCount['detachedComponents']).reduce((a, b) => a + b.count, 0));
     setTotalColourStyleCount(totalColourStyleCount + Object.values(librariesCount['colourStyles']).reduce((a, b) => a + b.count, 0));
     // setTotalTextStyleCount(totalTextStyleCount + Object.values(librariesCount['textStyles']).reduce((a, b) => a + b, 0));
     setLibraryCounts(librariesCount);
 
     console.log(`Library Instance Counts: `, librariesCount);
     console.log(`Total Local Instances: ${totalLocalInstanceCount}`);
+    console.log(`Total Detached Instances: ${Object.values(librariesCount['detachedComponents']).reduce((a, b) => a + b.count, 0)}`);
   }
 
 
@@ -299,8 +316,10 @@ function Widget() {
 
   const showCoverage = (type: 'components' | 'colours' | 'text') => {
     if (type === 'components') {
-      console.log(totalComponentCount, localComponentsCount, unknowns)
-      const coverage = (totalComponentCount - localComponentsCount - unknowns) / totalComponentCount
+      console.log(totalComponentCount, localComponentsCount, detachedComponentsCount, unknowns)
+      // Calculate coverage: (total external components) / (all components)
+      const total = totalComponentCount + localComponentsCount + detachedComponentsCount
+      const coverage = totalComponentCount > 0 ? totalComponentCount / total : 0
       const coverageString = (100 * coverage).toFixed(2)
       return `${coverageString}`;
     }
@@ -326,7 +345,7 @@ function Widget() {
         direction="vertical"
         spacing={8}
         padding={16}
-        width={180}
+        width={200}
         height={'fill-parent'}
         verticalAlignItems={'start'}
         horizontalAlignItems={'center'}
@@ -346,6 +365,25 @@ function Widget() {
           <Text fontSize={48} fontFamily="Nunito" fontWeight={'bold'} fill={'#C869EF'}>
             {showCoverage('components')}%
           </Text>
+          
+          {/* Component Counts */}
+          <AutoLayout direction="vertical" spacing={8} width={'fill-parent'} padding={{ top: 8 }}>
+            <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'}>
+              <Text fontSize={10} fontFamily="Nunito">External Components:</Text>
+              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'}>{Object.values(libraryCounts['components']).reduce((a, b) => a + b.count, 0)}</Text>
+            </AutoLayout>
+            
+            <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'}>
+              <Text fontSize={10} fontFamily="Nunito" fill={'#f00'}>Local Components:</Text>
+              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'} fill={'#f00'}>{Object.values(libraryCounts['localComponents']).reduce((a, b) => a + b.count, 0)}</Text>
+            </AutoLayout>
+            
+            <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'}>
+              <Text fontSize={10} fontFamily="Nunito" fill={'#FF9900'}>Detached Components:</Text>
+              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'} fill={'#FF9900'}>{Object.values(libraryCounts['detachedComponents']).reduce((a, b) => a + b.count, 0)}</Text>
+            </AutoLayout>
+          </AutoLayout>
+          
           <AutoLayout
             padding={{ vertical: 4, horizontal: 8 }}
             stroke={'#f3f3f3'}
@@ -378,7 +416,7 @@ function Widget() {
               <path d="M6.22252 5.99999L8.76811 3.45441L11.3137 5.99999L8.76811 8.54558L6.22252 5.99999Z" fill="#C869EF" />
               <path d="M3.11128 9.11126L5.65686 6.56568L8.20245 9.11126L5.65686 11.6568L3.11128 9.11126Z" fill="#C869EF" />
             </svg>`}></SVG>
-              <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>Components</Text>
+              <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>External Components</Text>
             </AutoLayout>
           </AutoLayout>
           {renderLibraryCounts('components')}
@@ -403,6 +441,26 @@ function Widget() {
             </AutoLayout>
           </AutoLayout>
           {renderLibraryCounts('localComponents')}
+        </AutoLayout>
+
+        <AutoLayout 
+          direction="vertical" 
+          width={'fill-parent'} 
+          spacing={10} 
+          >
+          <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
+            <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
+              <SVG src={`
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 5.99999L2.54558 3.45441L5.09117 5.99999L2.54558 8.54558L0 5.99999Z" fill="#FF9900" />
+              <path d="M3.11128 2.88872L5.65686 0.34314L8.20245 2.88872L5.65686 5.43431L3.11128 2.88872Z" fill="#FF9900" />
+              <path d="M6.22252 5.99999L8.76811 3.45441L11.3137 5.99999L8.76811 8.54558L6.22252 5.99999Z" fill="#FF9900" />
+              <path d="M3.11128 9.11126L5.65686 6.56568L8.20245 9.11126L5.65686 11.6568L3.11128 9.11126Z" fill="#FF9900" />
+            </svg>`}></SVG>
+              <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12} fill={'#FF9900'}>Detached Components</Text>
+            </AutoLayout>
+          </AutoLayout>
+          {renderLibraryCounts('detachedComponents')}
         </AutoLayout>
 
         <AutoLayout direction="vertical" spacing={10} width={'fill-parent'} padding={16}>
