@@ -144,10 +144,14 @@ function traverseInstanceNodes(node: BaseNode) {
       const componentKey = node.mainComponent?.key || "";
 
       if (node.mainComponent.remote) {
+        // Access from global state since we're outside the Widget component
+        const storedKeys = figma.root.getPluginData("approvedLibraryKeys");
+        const approvedKeys = storedKeys ? JSON.parse(storedKeys) : [];
+        
         // Check if we're filtering by approved library keys and if this component is in the approved list
         const isApproved =
-          approvedLibraryKeys.length === 0 ||
-          approvedLibraryKeys.includes(componentKey);
+          approvedKeys.length === 0 ||
+          approvedKeys.includes(componentKey);
 
         // Add a tag to the name to indicate if it's approved or not
         const taggedName = isApproved ? `✅ ${name}` : `❌ ${name}`;
@@ -460,6 +464,8 @@ const Widget = () => {
     const fetchApprovedKeys = async () => {
       const keys = await loadApprovedComponentKeys();
       setApprovedLibraryKeys(keys);
+      // Store in plugin data for access from outside the component
+      figma.root.setPluginData("approvedLibraryKeys", JSON.stringify(keys));
     };
 
     fetchApprovedKeys();
