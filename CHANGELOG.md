@@ -3,6 +3,13 @@
 
 All notable changes to the Design Doctor widget will be documented in this file.
 
+## [2.0.1] - 2023-03-21
+
+### 🔧 Fixed
+- Fixed asynchronous API calls for `getVariableById` to use `getVariableByIdAsync` instead
+- Updated `getFillInfo` and `traverseAllNodes` to handle async operations properly
+- Fixed widget compatibility with "documentAccess: dynamic-page" manifest setting
+
 ## [2.0.0] - 2025-03-02
 
 ### 🚀 Major Changes
