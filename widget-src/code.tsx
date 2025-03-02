@@ -62,29 +62,37 @@ function Widget() {
   };
 
   const countStuffOnCurrentPage = async () => {
-    const currentPage = figma.currentPage;
-    
-    // Set loading state to true and ensure clean state  
-    setIsLoading(true);
-    
-    // Make sure we reset everything
-    resetCounter();
-    
-    // Log the reset for verification
-    console.log("Reset completed, starting new analysis");
+    try {
+      const currentPage = figma.currentPage;
+      
+      // Set loading state to true and ensure clean state  
+      setIsLoading(true);
+      
+      // Make sure we reset everything
+      resetCounter();
+      
+      // Log the reset for verification
+      console.log("Reset completed, starting new analysis");
 
-    figma.skipInvisibleInstanceChildren = true;
+      figma.skipInvisibleInstanceChildren = false; // Change to false to include invisible children
     
     // Find all sections on the page
     const sections = currentPage.findAllWithCriteria({
       types: ["SECTION"],
     });
     
-    // Process all sections immediately (original approach)
-    for (const section of sections) {
-      console.log("Traversing ", section.name);
-      traverseInstanceNodes(section);
-      traverseAllNodes(section, "colourStyles");
+    // If no sections found, check if we need to analyze the whole page
+    if (sections.length === 0) {
+      console.log("No sections found, analyzing the whole page");
+      await traverseInstanceNodes(currentPage);
+      await traverseAllNodes(currentPage, "colourStyles");
+    } else {
+      // Process all sections with await for async traversal
+      for (const section of sections) {
+        console.log("Traversing ", section.name);
+        await traverseInstanceNodes(section);
+        await traverseAllNodes(section, "colourStyles");
+      }
     }
     
     // Calculate totals
@@ -122,6 +130,12 @@ function Widget() {
     
     // Set loading state back to false after computation is done
     setIsLoading(false);
+    console.log("Analysis completed successfully");
+    } catch (error) {
+      console.error("Error during analysis:", error);
+      figma.notify("Error during analysis: " + error.message);
+      setIsLoading(false);
+    }
   };
 
   usePropertyMenu(
@@ -140,10 +154,16 @@ function Widget() {
       if (e.propertyName === "reset") {
         resetData();
         setIsLoading(true);
-        // After a small delay, run the analysis again
-        setTimeout(() => {
-          countStuffOnCurrentPage();
-        }, 500);
+        // Use an async function to handle the reset and counting
+        (async () => {
+          try {
+            await countStuffOnCurrentPage();
+          } catch (error) {
+            console.error("Error during analysis:", error);
+            figma.notify("Error during analysis. Please try again.");
+            setIsLoading(false);
+          }
+        })();
       }
     },
   );

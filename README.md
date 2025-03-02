@@ -17,7 +17,7 @@ The idea was inspired by what the lovely folks at [Razorpay](https://github.com/
 - Add the plugin from Figma Community
 - Hit `Cmd / Ctrl + P` to open the quick access menu
 - Type Design Doctor and hit return
-- A widget will be created in some time on the page, with the details
+- A widget will be created in some time on the page, with the detail[![codecov](https://codecov.io/gh/USERNAME/REPO-NAME/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/REPO-NAME)
 
 ## How does it work?
 The plugin scans the current page from where it is invoked, scans all the Sections in it (Sections are a must as of now), all the Frames within the sections, and calculates the coverage of component instances used. It also mentions the remote components used as a list, the instances whose parents have been deleted / detached, and local components.

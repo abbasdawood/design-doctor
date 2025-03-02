@@ -67,6 +67,7 @@ export function HeroSection(props: HeroSectionProps) {
     
     // Ensure we have enough time to reset state before running
     window._resetTimeout = setTimeout(() => {
+      // The onRunAgain function will handle our async operations
       onRunAgain();
     }, 800);
   };

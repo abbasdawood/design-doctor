@@ -1,23 +1,26 @@
 {
   "name": "Design Doctor",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A widget that gives a sneak peak of all components and colour styles used in Frames inside Sections on a Page. Helps Devs and designers see the ratio of Local and Remote components and optimise if needed.",
   "scripts": {
     "build": "esbuild widget-src/code.tsx --bundle --outfile=dist/code.js --target=es6",
     "tsc": "tsc --noEmit -p widget-src",
     "watch": "npm run build -- --watch",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "codecov": "codecov"
+    "test": "npx jest",
+    "test:watch": "npx jest --watch",
+    "test:coverage": "npx jest --coverage",
+    "codecov": "npx codecov"
   },
   "author": "Abbas Dawood <abbas.dawood@bizongo.com> (https://github.com/abbasdawood)",
   "license": "LGPL-2.1-only",
   "devDependencies": {
     "@figma/plugin-typings": "*",
     "@figma/widget-typings": "*",
+    "@types/jest": "^29.5.14",
     "codecov": "^3.8.2",
     "esbuild": "*",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.6",
     "typescript": "*"
   }
 }
