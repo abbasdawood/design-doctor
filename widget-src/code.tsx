@@ -64,7 +64,7 @@ function Widget() {
   const countStuffOnCurrentPage = async () => {
     const currentPage = figma.currentPage;
     
-    // Set loading state to true and ensure clean state
+    // Set loading state to true and ensure clean state  
     setIsLoading(true);
     
     // Make sure we reset everything
@@ -75,72 +75,53 @@ function Widget() {
 
     figma.skipInvisibleInstanceChildren = true;
     
-    // First, gather all sections to analyze
+    // Find all sections on the page
     const sections = currentPage.findAllWithCriteria({
       types: ["SECTION"],
     });
     
-    // Process sections in smaller chunks to avoid UI freezing
-    let sectionIndex = 0;
-    
-    function processNextSection() {
-      // Allow UI to update between sections by using setTimeout
-      if (sectionIndex < sections.length) {
-        const section = sections[sectionIndex++];
-        console.log("Traversing ", section.name);
-        
-        // Process this section
-        traverseInstanceNodes(section);
-        traverseAllNodes(section, "colourStyles");
-        
-        // Schedule next section after a brief delay
-        setTimeout(processNextSection, 10);
-      } else {
-        // All sections processed, update state with counts
-        finishProcessing();
-      }
+    // Process all sections immediately (original approach)
+    for (const section of sections) {
+      console.log("Traversing ", section.name);
+      traverseInstanceNodes(section);
+      traverseAllNodes(section, "colourStyles");
     }
     
-    function finishProcessing() {
-      // Calculate totals before updating state
-      const externalComponentCount = Object.values(globalLibrariesCount["components"]).reduce(
-        (a: number, b: { count: number; ids: string[] }) => a + b.count,
-        0
-      );
-      
-      const localCount = Object.values(globalLibrariesCount["localComponents"]).reduce(
-        (a: number, b: { count: number; ids: string[] }) => a + b.count,
-        0
-      );
-      
-      const detachedCount = Object.values(globalLibrariesCount["detachedComponents"]).reduce(
-        (a: number, b: { count: number; ids: string[] }) => a + b.count,
-        0
-      );
-      
-      const colourStyleCount = Object.values(globalLibrariesCount["colourStyles"]).reduce(
-        (a: number, b: { count: number; ids: string[] }) => a + b.count,
-        0
-      );
-      
-      // Update all counts at once - replacing addition with direct assignment
-      setTotalComponentCount(externalComponentCount);
-      setLocalComponentsCount(localCount);
-      setDetachedComponentsCount(detachedCount);
-      setTotalColourStyleCount(colourStyleCount);
-      setLibraryCounts({...globalLibrariesCount});
-
-      console.log(`Library Instance Counts: `, globalLibrariesCount);
-      console.log(`Total External Components: ${externalComponentCount}`);
-      console.log(`Total Local Instances: ${localCount}`);
-      console.log(`Total Detached Instances: ${detachedCount}`);
-      
-      // Set loading state back to false after computation is done
-      setIsLoading(false);
-    }
+    // Calculate totals
+    const externalComponentCount = Object.values(globalLibrariesCount["components"]).reduce(
+      (a: number, b: { count: number; ids: string[] }) => a + b.count,
+      0
+    );
     
-    // Start processing sections
-    processNextSection();
+    const localCount = Object.values(globalLibrariesCount["localComponents"]).reduce(
+      (a: number, b: { count: number; ids: string[] }) => a + b.count,
+      0
+    );
+    
+    const detachedCount = Object.values(globalLibrariesCount["detachedComponents"]).reduce(
+      (a: number, b: { count: number; ids: string[] }) => a + b.count,
+      0
+    );
+    
+    const colourStyleCount = Object.values(globalLibrariesCount["colourStyles"]).reduce(
+      (a: number, b: { count: number; ids: string[] }) => a + b.count,
+      0
+    );
+    
+    // Update all counts at once
+    setTotalComponentCount(externalComponentCount);
+    setLocalComponentsCount(localCount);
+    setDetachedComponentsCount(detachedCount);
+    setTotalColourStyleCount(colourStyleCount);
+    setLibraryCounts({...globalLibrariesCount});
+    
+    console.log(`Library Instance Counts: `, globalLibrariesCount);
+    console.log(`Total External Components: ${externalComponentCount}`);
+    console.log(`Total Local Instances: ${localCount}`);
+    console.log(`Total Detached Instances: ${detachedCount}`);
+    
+    // Set loading state back to false after computation is done
+    setIsLoading(false);
   };
 
   usePropertyMenu(
@@ -183,13 +164,12 @@ function Widget() {
         totalComponentCount + localComponentsCount + detachedComponentsCount;
       
       // Calculate coverage according to README formula:
-      // (Total Components - Local Components - Deleted Components) / Total Components
+      // (External Components) / (External Components + Local Components + Detached Components) * 100
       const coverage = 
-        total > 0 ? (total - localComponentsCount - detachedComponentsCount) / total : 0;
+        total > 0 ? totalComponentCount / total : 0;
       
-      // Format to 2 decimal places with consistent rounding
-      const coverageString = Math.round(coverage * 10000) / 100; // More precise rounding
-      return `${coverageString.toFixed(2)}`;
+      // Format to 2 decimal places
+      return (coverage * 100).toFixed(2);
     } else return "N/A";
   };
 
