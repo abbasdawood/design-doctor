@@ -4,6 +4,8 @@
 
 A Figma widget that generates a frame with a list of components used in the Figma page that it is executed from.
 
+[📋 Changelog](./CHANGELOG.md) | [Latest Release Notes](./CHANGELOG.md#110---2023-11-10)
+
 ![Plugin Cover](https://github.com/abbasdawood/design-doctor/assets/46668006/997f3553-b4da-4451-9297-628daf98c9fe)
 
 ## Motivation
