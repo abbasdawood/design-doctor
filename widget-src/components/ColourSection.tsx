@@ -1,6 +1,7 @@
 
-const { AutoLayout, Text, SVG } = figma.widget;
-import { Library } from '../types';
+import { widget } from "figma";
+const { AutoLayout, Text, SVG } = widget;
+import { Library } from "../types";
 
 interface ColourSectionProps {
   data: Record<string, Library>;
@@ -12,31 +13,32 @@ export function ColourSection(props: ColourSectionProps) {
   
   const renderLibraryCounts = () => {
     const characterLength = 45;
-
-    return Object.entries<Library>(data).map(([libraryId, library]) => (
-      <AutoLayout key={libraryId} direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
-        <AutoLayout direction="horizontal" spacing={4} width={'fill-parent'} verticalAlignItems="center">
-          <Text fontSize={10} fontFamily="Nunito" truncate={true} fill={'#333'}>
-            {libraryId.length > characterLength ? libraryId.slice(0, characterLength) + '..' : libraryId}
+    
+    return Object.entries<Library>(data)
+      .sort((a, b) => {
+        // First by count (highest to lowest)
+        const countDiff = b[1].count - a[1].count;
+        // If counts are equal, sort alphabetically
+        return countDiff !== 0 ? countDiff : a[0].localeCompare(b[0]);
+      })
+      .map(([colorName, color]) => (
+        <AutoLayout 
+          key={colorName} 
+          direction="horizontal" 
+          spacing={'auto'} 
+          width={'fill-parent'} 
+          verticalAlignItems="center"
+          padding={{ vertical: 4, horizontal: 8 }}
+          hoverStyle={{ fill: '#f5f5f5' }}
+          cornerRadius={4}
+          onClick={() => selectLayersById(color.ids)}
+        >
+          <Text fontSize={10} fontFamily="Nunito" truncate={true}>
+            {colorName.length > characterLength ? colorName.slice(0, characterLength) + '..' : colorName}
           </Text>
-          <AutoLayout
-            padding={{ vertical: 4, horizontal: 8 }}
-            stroke={'#f3f3f3'}
-            fill={'#fafafa'}
-            strokeWidth={1}
-            horizontalAlignItems={'center'}
-            cornerRadius={14}
-            verticalAlignItems="center"
-            onClick={() => {
-              selectLayersById(library.ids);
-            }}
-          >
-            <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Select</Text>
-          </AutoLayout>
+          <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right">{`${color.count}`}</Text>
         </AutoLayout>
-        <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={'#333'}>{`${library.count}`}</Text>
-      </AutoLayout>
-    ));
+      ));
   };
 
   return (
