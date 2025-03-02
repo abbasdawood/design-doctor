@@ -1,5 +1,5 @@
 const { widget } = figma;
-const { AutoLayout, Text } = widget;
+const { AutoLayout, Text, SVG, useSyncedState, useEffect } = widget;
 
 interface HeroSectionProps {
   coverage: string;
@@ -8,6 +8,51 @@ interface HeroSectionProps {
 
 export function HeroSection(props: HeroSectionProps) {
   const { coverage, onRunAgain } = props;
+  const [isLoading, setIsLoading] = useSyncedState("isLoading", false);
+  const [loadingMessage, setLoadingMessage] = useSyncedState("loadingMessage", "");
+  
+  // Quirky loading messages
+  const loadingMessages = [
+    "Counting pixels... so many pixels! 🔍",
+    "Inspecting component DNA... 🧬",
+    "Hunting for rogue components... 🕵️‍♀️",
+    "Calling the design police... 👮‍♂️",
+    "Performing component surgery... 🩺",
+    "Diagnosing design ailments... 🤒",
+    "Searching for design vitamins... 💊",
+    "Taking the design's temperature... 🌡️",
+    "Checking component pulse... ❤️",
+    "Writing a design prescription... 📝"
+  ];
+
+  // Function to change message periodically during loading
+  useEffect(() => {
+    if (isLoading) {
+      let interval = setInterval(() => {
+        const randomIndex = Math.floor(Math.random() * loadingMessages.length);
+        setLoadingMessage(loadingMessages[randomIndex]);
+      }, 2000);
+      
+      // Initial loading message
+      setLoadingMessage(loadingMessages[0]);
+      
+      return () => {
+        clearInterval(interval);
+      };
+    }
+  });
+
+  // Start loading when Run Again is clicked
+  const handleRunAgain = () => {
+    setIsLoading(true);
+    onRunAgain();
+    
+    // Simulate end of loading after a few seconds
+    // In real use, this should be called after the computation is actually complete
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+  };
 
   return (
     <AutoLayout
@@ -37,17 +82,54 @@ export function HeroSection(props: HeroSectionProps) {
         horizontalAlignItems={"center"}
         padding={{ top: 16, bottom: 16 }}
       >
-        <Text fontSize={10} fontFamily="Nunito">
-          Components Coverage
-        </Text>
-        <Text
-          fontSize={48}
-          fontFamily="Nunito"
-          fontWeight={"bold"}
-          fill={"#C869EF"}
-        >
-          {coverage}%
-        </Text>
+        {isLoading ? (
+          <AutoLayout
+            direction="vertical"
+            spacing={16}
+            verticalAlignItems={"center"}
+            horizontalAlignItems={"center"}
+            width={"fill-parent"}
+          >
+            {/* Spinner animation */}
+            <SVG
+              src={`<svg width="40" height="40" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="25" cy="25" r="20" fill="none" stroke="#C869EF" stroke-width="5" stroke-dasharray="80 30">
+                  <animateTransform
+                    attributeName="transform"
+                    attributeType="XML"
+                    type="rotate"
+                    from="0 25 25"
+                    to="360 25 25"
+                    dur="1s"
+                    repeatCount="indefinite"/>
+                </circle>
+              </svg>`}
+            />
+            <Text
+              fontSize={12}
+              fontFamily="Nunito"
+              horizontalAlignText={"center"}
+              width={180}
+              fill={"#666"}
+            >
+              {loadingMessage}
+            </Text>
+          </AutoLayout>
+        ) : (
+          <>
+            <Text fontSize={10} fontFamily="Nunito">
+              Components Coverage
+            </Text>
+            <Text
+              fontSize={48}
+              fontFamily="Nunito"
+              fontWeight={"bold"}
+              fill={"#C869EF"}
+            >
+              {coverage}%
+            </Text>
+          </>
+        )}
 
         <AutoLayout
           padding={{ vertical: 4, horizontal: 8 }}
@@ -57,7 +139,7 @@ export function HeroSection(props: HeroSectionProps) {
           horizontalAlignItems={"center"}
           cornerRadius={14}
           verticalAlignItems="center"
-          onClick={onRunAgain}
+          onClick={handleRunAgain}
         >
           <Text
             fontSize={10}
@@ -65,7 +147,7 @@ export function HeroSection(props: HeroSectionProps) {
             horizontalAlignText="center"
             fontFamily="Nunito"
           >
-            Run Again
+            {isLoading ? "Running..." : "Run Again"}
           </Text>
         </AutoLayout>
       </AutoLayout>

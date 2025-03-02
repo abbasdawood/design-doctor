@@ -43,10 +43,14 @@ function Widget() {
   const [unknowns, setUnknowns] = useSyncedState("unknowns", 0);
   let uk = 0;
 
+  const [isLoading, setIsLoading] = useSyncedState("isLoading", false);
+
   const countStuffOnCurrentPage = async () => {
     const currentPage = figma.currentPage;
     let totalLocalInstanceCount = 0;
 
+    // Set loading state to true
+    setIsLoading(true);
     resetCounter();
 
     figma.skipInvisibleInstanceChildren = true;
@@ -94,6 +98,9 @@ function Widget() {
     console.log(
       `Total Detached Instances: ${Object.values(globalLibrariesCount["detachedComponents"]).reduce((a: number, b: { count: number; ids: string[] }) => a + b.count, 0)}`,
     );
+    
+    // Set loading state back to false after computation is done
+    setIsLoading(false);
   };
 
   usePropertyMenu(
