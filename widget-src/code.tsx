@@ -174,7 +174,10 @@ function Widget() {
     >
       <HeroSection
         coverage={showCoverage("components")}
-        onRunAgain={countStuffOnCurrentPage}
+        onRunAgain={() => {
+          resetData();
+          countStuffOnCurrentPage();
+        }}
       />
       <AutoLayout direction="horizontal" spacing={16} width={1040}>
         <ComponentsSection

@@ -46,7 +46,12 @@ export function HeroSection(props: HeroSectionProps) {
   const handleRunAgain = () => {
     setIsLoading(true);
     setLoadingMessage(loadingMessages[0]);
-    onRunAgain();
+    // First, tell the parent to reset data (which happens in property menu)
+    figma.notify("Resetting data...");
+    // Then run the analysis again
+    setTimeout(() => {
+      onRunAgain();
+    }, 500);
   };
 
   // Determine colors based on coverage percentage
