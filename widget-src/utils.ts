@@ -75,8 +75,9 @@ export async function traverseInstanceNodes(node: BaseNode) {
     // Use getMainComponentAsync instead of directly accessing mainComponent
     const mainComponent = await node.getMainComponentAsync();
     
-    // Check if the component is detached
-    if (mainComponent?.parent === null && node.masterComponent?.detached) {
+    // Check if the component is detached - use isDetached API instead of accessing masterComponent directly
+    const isDetached = !(mainComponent) || node.isDetached;
+    if (mainComponent?.parent === null || isDetached) {
       let name = 'Detached Component';
       if (!librariesCount['detachedComponents'][name]) {
         librariesCount['detachedComponents'][name] = { count: 1, ids: [idToAdd] };

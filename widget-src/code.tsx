@@ -62,18 +62,19 @@ function Widget() {
   };
 
   const countStuffOnCurrentPage = async () => {
-    const currentPage = figma.currentPage;
-    
-    // Set loading state to true and ensure clean state  
-    setIsLoading(true);
-    
-    // Make sure we reset everything
-    resetCounter();
-    
-    // Log the reset for verification
-    console.log("Reset completed, starting new analysis");
+    try {
+      const currentPage = figma.currentPage;
+      
+      // Set loading state to true and ensure clean state  
+      setIsLoading(true);
+      
+      // Make sure we reset everything
+      resetCounter();
+      
+      // Log the reset for verification
+      console.log("Reset completed, starting new analysis");
 
-    figma.skipInvisibleInstanceChildren = false; // Change to false to include invisible children
+      figma.skipInvisibleInstanceChildren = false; // Change to false to include invisible children
     
     // Find all sections on the page
     const sections = currentPage.findAllWithCriteria({
@@ -129,6 +130,12 @@ function Widget() {
     
     // Set loading state back to false after computation is done
     setIsLoading(false);
+    console.log("Analysis completed successfully");
+    } catch (error) {
+      console.error("Error during analysis:", error);
+      figma.notify("Error during analysis: " + error.message);
+      setIsLoading(false);
+    }
   };
 
   usePropertyMenu(
