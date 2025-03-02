@@ -161,6 +161,7 @@ export function traverseInstanceNodes(node: BaseNode) {
 }
 
 export function resetCounter() {
+  // Create a fresh object to avoid any reference issues
   librariesCount = {
     components: {},
     localComponents: {},
@@ -168,6 +169,9 @@ export function resetCounter() {
     colourStyles: {},
     textStyles: {}
   };
+  
+  // Log the reset to verify
+  console.log("Counter reset complete", JSON.stringify(librariesCount));
 }
 
 export function selectLayersById(layerIds: string[]) {

@@ -63,11 +63,15 @@ function Widget() {
 
   const countStuffOnCurrentPage = async () => {
     const currentPage = figma.currentPage;
-    let totalLocalInstanceCount = 0;
-
-    // Set loading state to true
+    
+    // Set loading state to true and ensure clean state
     setIsLoading(true);
+    
+    // Make sure we reset everything
     resetCounter();
+    
+    // Log the reset for verification
+    console.log("Reset completed, starting new analysis");
 
     figma.skipInvisibleInstanceChildren = true;
     
@@ -178,13 +182,14 @@ function Widget() {
       const total = 
         totalComponentCount + localComponentsCount + detachedComponentsCount;
       
-      // Calculate coverage as the percentage of external components
+      // Calculate coverage according to README formula:
+      // (Total Components - Local Components - Deleted Components) / Total Components
       const coverage = 
-        total > 0 ? totalComponentCount / total : 0;
+        total > 0 ? (total - localComponentsCount - detachedComponentsCount) / total : 0;
       
-      // Format to 2 decimal places
-      const coverageString = (100 * coverage).toFixed(2);
-      return `${coverageString}`;
+      // Format to 2 decimal places with consistent rounding
+      const coverageString = Math.round(coverage * 10000) / 100; // More precise rounding
+      return `${coverageString.toFixed(2)}`;
     } else return "N/A";
   };
 
