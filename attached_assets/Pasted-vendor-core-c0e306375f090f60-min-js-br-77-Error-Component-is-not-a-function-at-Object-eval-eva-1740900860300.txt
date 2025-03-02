@@ -1,0 +1,59 @@
+vendor-core-c0e306375f090f60.min.js.br:77 Error: Component is not a function
+    at Object.eval (eval at <anonymous> (eval at createScopedEvaluatorFactory (blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:1:6906)), <anonymous>:1:381)
+    at Widget (PLUGIN_10_SOURCE:475:36)
+    at en.callFunction (https://www.figma.com/webpack-artifacts/assets/5627-42c87e754b600289.min.js.br:928:5093)
+    at k.renderWidgetTree (https://www.figma.com/webpack-artifacts/assets/5627-42c87e754b600289.min.js.br:1073:1037)
+    at https://www.figma.com/webpack-artifacts/assets/5627-42c87e754b600289.min.js.br:1065:41953
+    at c (https://www.figma.com/webpack-artifacts/assets/figma_app-596f962a9dd95f42.min.js.br:178:139303)
+    at t.renderScheduler [as renderFn] (https://www.figma.com/webpack-artifacts/assets/5627-42c87e754b600289.min.js.br:1065:41792)
+    at https://www.figma.com/webpack-artifacts/assets/5627-42c87e754b600289.min.js.br:1065:37349
+    at async E.waitForFinish (https://www.figma.com/webpack-artifacts/assets/5627-42c87e754b600289.min.js.br:1065:37544)
+    at async k.waitForFinish (https://www.figma.com/webpack-artifacts/assets/5627-42c87e754b600289.min.js.br:1073:1891)
+(anonymous) @ vendor-core-c0e306375f090f60.min.js.br:77
+vendor-core-c0e306375f090f60.min.js.br:77 An error occurred while running this widget 
+(anonymous) @ vendor-core-c0e306375f090f60.min.js.br:77
+vendor-core-c0e306375f090f60.min.js.br:77 Error: in useSyncedState: Cannot use useSyncedState hook outside of widget rendering.
+    at useSyncedState (eval at <anonymous> (eval at createScopedEvaluatorFactory (blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:1:6906)), <anonymous>:23:21)
+    at Widget (PLUGIN_11_SOURCE:197:63)
+    at widget-src/code.tsx (PLUGIN_11_SOURCE:515:23)
+    at __require (PLUGIN_11_SOURCE:5:52)
+    at eval (PLUGIN_11_SOURCE:518:3)
+    at Proxy.eval (PLUGIN_11_SOURCE:519:3)
+    at Object.eval (eval at createScopedEvaluatorFactory (blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:1:6906), <anonymous>:8:16)
+    at blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:9:1235
+    at blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:9:1908
+    at realmEvaluate (blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:9:10651)
+(anonymous) @ vendor-core-c0e306375f090f60.min.js.br:77
+evalCode @ 5627-42c87e754b600289.min.js.br:928
+evalTopLevelCode @ 5627-42c87e754b600289.min.js.br:928
+(anonymous) @ 5627-42c87e754b600289.min.js.br:928
+t @ vendor-core-c0e306375f090f60.min.js.br:77
+vendor-core-c0e306375f090f60.min.js.br:77 Error: Error: widget missing call to figma.widget.register
+    at t (5627-42c87e754b600289.min.js.br:928:8078)
+    at 5627-42c87e754b600289.min.js.br:928:13778
+    at t (vendor-core-c0e306375f090f60.min.js.br:77:3695)
+(anonymous) @ vendor-core-c0e306375f090f60.min.js.br:77
+(anonymous) @ 5627-42c87e754b600289.min.js.br:561
+vendor-core-c0e306375f090f60.min.js.br:77 Error: Error: widget missing call to figma.widget.register
+    at t (5627-42c87e754b600289.min.js.br:928:8078)
+    at 5627-42c87e754b600289.min.js.br:928:13778
+    at t (vendor-core-c0e306375f090f60.min.js.br:77:3695)
+(anonymous) @ vendor-core-c0e306375f090f60.min.js.br:77
+ei @ 5627-42c87e754b600289.min.js.br:561
+vendor-core-c0e306375f090f60.min.js.br:77 [Local fonts] using agent
+vendor-core-c0e306375f090f60.min.js.br:77 Error: in useSyncedState: Cannot use useSyncedState hook outside of widget rendering.
+    at useSyncedState (eval at <anonymous> (eval at createScopedEvaluatorFactory (blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:1:6906)), <anonymous>:23:21)
+    at Widget (PLUGIN_12_SOURCE:197:63)
+    at widget-src/code.tsx (PLUGIN_12_SOURCE:515:23)
+    at __require (PLUGIN_12_SOURCE:5:52)
+    at eval (PLUGIN_12_SOURCE:518:3)
+    at Proxy.eval (PLUGIN_12_SOURCE:519:3)
+    at Object.eval (eval at createScopedEvaluatorFactory (blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:1:6906), <anonymous>:8:16)
+    at blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:9:1235
+    at blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:9:1908
+    at realmEvaluate (blob:https://www.figma.com/7dc5c24c-32f6-4aa6-8bc2-099465987e0c:9:10651)
+(anonymous) @ vendor-core-c0e306375f090f60.min.js.br:77
+2vendor-core-c0e306375f090f60.min.js.br:77 Error: Error: widget missing call to figma.widget.register
+    at t (5627-42c87e754b600289.min.js.br:928:8078)
+    at 5627-42c87e754b600289.min.js.br:928:13778
+    at t (vendor-core-c0e306375f090f60.min.js.br:77:3695)
