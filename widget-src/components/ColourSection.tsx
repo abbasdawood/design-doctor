@@ -1,5 +1,5 @@
 
-import { widget } from "figma";
+const { widget } = figma;
 const { AutoLayout, Text, SVG } = widget;
 import { Library } from "../types";
 
