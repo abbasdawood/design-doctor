@@ -3,6 +3,19 @@
 
 All notable changes to the Design Doctor widget will be documented in this file.
 
+## [2.0.0] - 2023-11-15
+
+### 🚀 Major Changes
+- Fixed coverage calculation logic for more accurate results
+- Improved UI/UX with color-coded coverage indicators
+- Enhanced performance with optimized traversal algorithms
+- Added better error handling and recovery for large Figma files
+
+### 🌈 Added
+- Improved loading animation with new quirky messages
+- Better contrast and accessibility for UI elements
+- More detailed component categorization
+
 ## [1.1.0] - 2023-11-10
 
 ### 🌈 Added
