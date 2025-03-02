@@ -10,8 +10,8 @@ const {
 } = widget;
 
 interface LibrariesCount {
-  components: Record<string, { count: number; ids: string[] }>;
-  localComponents: Record<string, { count: number; ids: string[] }>;
+  components: Record<string, { count: number; ids: string[]; isApproved?: boolean; key?: string }>;
+  localComponents: Record<string, { count: number; ids: string[]; isApproved?: boolean; key?: string }>;
   colourStyles: Record<string, { count: number; ids: string[] }>;
   textStyles: Record<string, { count: number; ids: string[] }>;
 }
