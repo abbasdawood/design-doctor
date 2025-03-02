@@ -222,7 +222,7 @@ async function loadApprovedComponentKeys() {
   return updatedKeys.length > 0 ? updatedKeys : componentKeys;
 }
 
-function Widget() {
+const Widget = () => {
   const [totalComponentCount, setTotalComponentCount] = useSyncedState('totalComponentCount', 0);
   const [totalColourStyleCount, setTotalColourStyleCount] = useSyncedState('totalColourStyleCount', 0);
   // const [totalTextStyleCount, setTotalTextStyleCount] = useSyncedState('totalTextStyleCount', 0);
@@ -614,4 +614,4 @@ function Widget() {
   );
 }
 
-widget.register(Widget);
+widget.register(Widget());
