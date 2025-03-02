@@ -35,27 +35,70 @@ const isObjectEmpty = (objectName: any) => {
 
 // Lookup Functions
 function getFillInfo(fillInfo: any) {
+  if (!fillInfo || !fillInfo.length) return [];
 
-  return fillInfo && fillInfo.length && fillInfo.map((f: any) => {
+  return fillInfo.map((f: any) => {
     let colour;
 
     if (f.type === 'SOLID') {
-
-      if (f.color) {
-        if (!isObjectEmpty(f.boundVariables) && !isObjectEmpty(f.boundVariables.color) && f.boundVariables.color.type === 'VARIABLE_ALIAS') {
-          colour = getVariableName(f.boundVariables.color.id)
-        } else if (isObjectEmpty(f.boundVariables)) {
-          colour = 'Local Colour'
-        }
-      } else if (isObjectEmpty(f.color)) {
-        colour = 'No Fill'
+      // Check if boundVariables exists and has valid color data
+      if (f.boundVariables && 
+          f.boundVariables.color && 
+          !isObjectEmpty(f.boundVariables.color) && 
+          f.boundVariables.color.type === 'VARIABLE_ALIAS') {
+        colour = getVariableName(f.boundVariables.color.id) || 'Unknown Variable';
+      } 
+      // If valid color property exists
+      else if (f.color && 
+               typeof f.color.r === 'number' && 
+               typeof f.color.g === 'number' && 
+               typeof f.color.b === 'number') {
+        colour = 'Local Colour';
+      } 
+      // No valid color
+      else {
+        colour = 'No Fill';
       }
-      console.log(`
-        Inferred: ${colour} | color ${JSON.stringify(f.color)}, BV ${JSON.stringify(f.boundVariables)}, BVC ${JSON.stringify(f.boundVariables.color)}
-      `);
+      
+      // Safer logging that won't cause issues if properties are undefined
+      console.log(`Inferred: ${colour}`);
     }
     return colour;
-  })
+  }).filter(Boolean); // Remove any undefined values
+}
+</old_str>
+<new_str>
+function getFillInfo(fillInfo: any) {
+  if (!fillInfo || !fillInfo.length) return [];
+
+  return fillInfo.map((f: any) => {
+    let colour;
+
+    if (f.type === 'SOLID') {
+      // Check if boundVariables exists and has valid color data
+      if (f.boundVariables && 
+          f.boundVariables.color && 
+          !isObjectEmpty(f.boundVariables.color) && 
+          f.boundVariables.color.type === 'VARIABLE_ALIAS') {
+        colour = getVariableName(f.boundVariables.color.id) || 'Unknown Variable';
+      } 
+      // If valid color property exists
+      else if (f.color && 
+               typeof f.color.r === 'number' && 
+               typeof f.color.g === 'number' && 
+               typeof f.color.b === 'number') {
+        colour = 'Local Colour';
+      } 
+      // No valid color
+      else {
+        colour = 'No Fill';
+      }
+      
+      // Safer logging that won't cause issues if properties are undefined
+      console.log(`Inferred: ${colour}`);
+    }
+    return colour;
+  }).filter(Boolean); // Remove any undefined values
 }
 
 function traverseAllNodes(node: BaseNode, library: 'colourStyles' | 'textStyles') {
