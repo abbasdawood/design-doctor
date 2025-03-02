@@ -3,7 +3,7 @@
 
 All notable changes to the Design Doctor widget will be documented in this file.
 
-## [2.0.0] - 2023-11-15
+## [2.0.0] - 2025-03-02
 
 ### 🚀 Major Changes
 - Fixed coverage calculation logic for more accurate results
@@ -15,8 +15,6 @@ All notable changes to the Design Doctor widget will be documented in this file.
 - Improved loading animation with new quirky messages
 - Better contrast and accessibility for UI elements
 - More detailed component categorization
-
-## [1.1.0] - 2023-11-10
 
 ### 🌈 Added
 - Color-coded coverage indicators in the hero section
@@ -36,7 +34,12 @@ All notable changes to the Design Doctor widget will be documented in this file.
 - Reduced UI updates during loading to improve responsiveness
 - Added more quirky loading messages to entertain you while waiting
 
-## [1.0.0] - 2023-10-15
+## [1.1.0] - 2024-01-23
+- Adds support for colours
+- Makes the widget more performant
+- Adds support for selecting nodes, and colours
+
+## [1.0.0] - 2023-12-26
 
 ### 🚀 Initial Release
 - Component coverage analysis
