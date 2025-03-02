@@ -44,6 +44,23 @@ function Widget() {
 
   const [isLoading, setIsLoading] = useSyncedState("isLoading", false);
 
+  // Function to reset all data
+  const resetData = () => {
+    setTotalComponentCount(0);
+    setTotalColourStyleCount(0);
+    setLocalComponentsCount(0);
+    setDetachedComponentsCount(0);
+    setUnknowns(0);
+    setLibraryCounts({
+      components: {},
+      colourStyles: {},
+      textStyles: {},
+      localComponents: {},
+      detachedComponents: {},
+    });
+    resetCounter();
+  };
+
   const countStuffOnCurrentPage = async () => {
     const currentPage = figma.currentPage;
     let totalLocalInstanceCount = 0;
@@ -114,8 +131,15 @@ function Widget() {
           `,
       },
     ],
-    () => {
-      countStuffOnCurrentPage();
+    (e) => {
+      if (e.propertyName === "reset") {
+        resetData();
+        setIsLoading(true);
+        // After a small delay, run the analysis again
+        setTimeout(() => {
+          countStuffOnCurrentPage();
+        }, 500);
+      }
     },
   );
 

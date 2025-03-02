@@ -45,13 +45,8 @@ export function HeroSection(props: HeroSectionProps) {
   // Start loading when Run Again is clicked
   const handleRunAgain = () => {
     setIsLoading(true);
+    setLoadingMessage(loadingMessages[0]);
     onRunAgain();
-    
-    // Simulate end of loading after a few seconds
-    // In real use, this should be called after the computation is actually complete
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 5000);
   };
 
   return (
