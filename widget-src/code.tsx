@@ -70,53 +70,79 @@ function Widget() {
     resetCounter();
 
     figma.skipInvisibleInstanceChildren = true;
-    for (const node of currentPage.findAllWithCriteria({
-      types: ["SECTION"],
-    })) {
-      console.log("Traversing ", node.name);
-
-      traverseInstanceNodes(node);
-      traverseAllNodes(node, "colourStyles");
-    }
-
-    setTotalComponentCount(
-      totalComponentCount +
-        Object.values(globalLibrariesCount["components"]).reduce(
-          (a: number, b: { count: number; ids: string[] }) => a + b.count,
-          0,
-        ),
-    );
-    setLocalComponentsCount(
-      localComponentsCount +
-        Object.values(globalLibrariesCount["localComponents"]).reduce(
-          (a: number, b: { count: number; ids: string[] }) => a + b.count,
-          0,
-        ),
-    );
-    setDetachedComponentsCount(
-      detachedComponentsCount +
-        Object.values(globalLibrariesCount["detachedComponents"]).reduce(
-          (a: number, b: { count: number; ids: string[] }) => a + b.count,
-          0,
-        ),
-    );
-    setTotalColourStyleCount(
-      totalColourStyleCount +
-        Object.values(globalLibrariesCount["colourStyles"]).reduce(
-          (a: number, b: { count: number; ids: string[] }) => a + b.count,
-          0,
-        ),
-    );
-    setLibraryCounts(globalLibrariesCount);
-
-    console.log(`Library Instance Counts: `, globalLibrariesCount);
-    console.log(`Total Local Instances: ${totalLocalInstanceCount}`);
-    console.log(
-      `Total Detached Instances: ${Object.values(globalLibrariesCount["detachedComponents"]).reduce((a: number, b: { count: number; ids: string[] }) => a + b.count, 0)}`,
-    );
     
-    // Set loading state back to false after computation is done
-    setIsLoading(false);
+    // First, gather all sections to analyze
+    const sections = currentPage.findAllWithCriteria({
+      types: ["SECTION"],
+    });
+    
+    // Process sections in smaller chunks to avoid UI freezing
+    let sectionIndex = 0;
+    
+    function processNextSection() {
+      // Allow UI to update between sections by using setTimeout
+      if (sectionIndex < sections.length) {
+        const section = sections[sectionIndex++];
+        console.log("Traversing ", section.name);
+        
+        // Process this section
+        traverseInstanceNodes(section);
+        traverseAllNodes(section, "colourStyles");
+        
+        // Schedule next section after a brief delay
+        setTimeout(processNextSection, 10);
+      } else {
+        // All sections processed, update state with counts
+        finishProcessing();
+      }
+    }
+    
+    function finishProcessing() {
+      // Update all counts at once
+      setTotalComponentCount(
+        totalComponentCount +
+          Object.values(globalLibrariesCount["components"]).reduce(
+            (a: number, b: { count: number; ids: string[] }) => a + b.count,
+            0,
+          ),
+      );
+      setLocalComponentsCount(
+        localComponentsCount +
+          Object.values(globalLibrariesCount["localComponents"]).reduce(
+            (a: number, b: { count: number; ids: string[] }) => a + b.count,
+            0,
+          ),
+      );
+      setDetachedComponentsCount(
+        detachedComponentsCount +
+          Object.values(globalLibrariesCount["detachedComponents"]).reduce(
+            (a: number, b: { count: number; ids: string[] }) => a + b.count,
+            0,
+          ),
+      );
+      setTotalColourStyleCount(
+        totalColourStyleCount +
+          Object.values(globalLibrariesCount["colourStyles"]).reduce(
+            (a: number, b: { count: number; ids: string[] }) => a + b.count,
+            0,
+          ),
+      );
+      setLibraryCounts(globalLibrariesCount);
+
+      console.log(`Library Instance Counts: `, globalLibrariesCount);
+      console.log(`Total Local Instances: ${totalLocalInstanceCount}`);
+      console.log(
+        `Total Detached Instances: ${Object.values(globalLibrariesCount["detachedComponents"]).reduce(
+          (a: number, b: { count: number; ids: string[] }) => a + b.count, 0
+        )}`,
+      );
+      
+      // Set loading state back to false after computation is done
+      setIsLoading(false);
+    }
+    
+    // Start processing sections
+    processNextSection();
   };
 
   usePropertyMenu(

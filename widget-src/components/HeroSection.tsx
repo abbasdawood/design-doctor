@@ -25,22 +25,33 @@ export function HeroSection(props: HeroSectionProps) {
     "Writing a design prescription... 📝"
   ];
 
-  // Function to change message periodically during loading
+  // Function to change message periodically during loading with less UI impact
   useEffect(() => {
     if (isLoading) {
-      let interval = setInterval(() => {
-        const randomIndex = Math.floor(Math.random() * loadingMessages.length);
-        setLoadingMessage(loadingMessages[randomIndex]);
-      }, 2000);
-      
-      // Initial loading message
+      // Set initial message
       setLoadingMessage(loadingMessages[0]);
       
+      // Create a less demanding interval (lower frequency updates)
+      let timeoutId: number;
+      let lastIndex = 0;
+      
+      const updateMessage = () => {
+        // Choose next message (not random to reduce computation)
+        lastIndex = (lastIndex + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[lastIndex]);
+        
+        // Schedule next update
+        timeoutId = setTimeout(updateMessage, 3000);
+      };
+      
+      // Start the timeout chain
+      timeoutId = setTimeout(updateMessage, 3000);
+      
       return () => {
-        clearInterval(interval);
+        clearTimeout(timeoutId);
       };
     }
-  });
+  }, [isLoading]); // Only run when isLoading changes
 
   // Start loading when Run Again is clicked
   const handleRunAgain = () => {

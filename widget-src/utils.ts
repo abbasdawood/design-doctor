@@ -44,103 +44,120 @@ export function getFillInfo(fillInfo: any) {
 
 export function traverseAllNodes(node: BaseNode, library: 'colourStyles' | 'textStyles') {
   console.log('Traversing --> ', node.name);
-
-  function traverse(node: any) {
-    let count = 0;
-
-    let name = getFillInfo(node.fills);
-    const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
-
-    if (name != 0) {
-      if (!librariesCount[library][name]) {
-        count++;
-        librariesCount[library][name] = { count: count, ids: [idToAdd] };
-      } else {
-        librariesCount[library][name].count += 1;
-        librariesCount[library][name].ids.push(idToAdd);
+  
+  // Use an iterative approach instead of recursive to avoid call stack issues
+  const nodesToProcess: any[] = [node];
+  const batchSize = 100;
+  let processed = 0;
+  
+  function processBatch() {
+    const endIndex = Math.min(processed + batchSize, nodesToProcess.length);
+    
+    for (let i = processed; i < endIndex; i++) {
+      const currentNode = nodesToProcess[i];
+      processed++;
+      
+      // Process current node
+      let name = getFillInfo(currentNode.fills);
+      const idToAdd = currentNode.id || '';
+      
+      if (name != 0) {
+        if (!librariesCount[library][name]) {
+          librariesCount[library][name] = { count: 1, ids: [idToAdd] };
+        } else {
+          librariesCount[library][name].count += 1;
+          librariesCount[library][name].ids.push(idToAdd);
+        }
+      }
+      
+      // Add children to process queue
+      if ('children' in currentNode) {
+        nodesToProcess.push(...currentNode.children);
       }
     }
-
-    if ('children' in node) {
-      for (const child of node.children) {
-        traverse(child);
-      }
+    
+    // If there are more nodes to process, schedule the next batch
+    if (processed < nodesToProcess.length) {
+      setTimeout(processBatch, 0);
     }
   }
-  traverse(node);
+  
+  // Start processing
+  processBatch();
 }
 
 export function traverseInstanceNodes(node: BaseNode) {
   console.log('Traversing --> ', node.name);
-
-  function traverse(node: any) {
-    if (node.type === 'INSTANCE') {
-      // Check if it's an instance with a main component
-      console.log(
-        `Node --> ${node.name}\n 
-           Node type --> ${node.type}\n 
-           Node Parent Type --> ${node.parent?.type}\n 
-           Node Main Component --> ${node.mainComponent}\n
-           Node Main Component Name --> ${node.mainComponent?.name}\n
-           Node Main Component Parent --> ${node.mainComponent?.parent}\n
-           Node Main Component Parent Name --> ${node.mainComponent?.parent?.name}\n
-           Node Main Component Remote --> ${node.mainComponent?.remote}`
-      );
-
-      let count = 0;
-      let localCount = 0;
-      let detachedCount = 0;
-      const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
-
-      // Check if the component is detached
-      if (node.mainComponent?.parent === null && node.masterComponent?.detached) {
-        let name = 'Detached Component';
-        if (!librariesCount['detachedComponents'][name]) {
-          detachedCount++;
-          librariesCount['detachedComponents'][name] = { count: detachedCount, ids: [idToAdd] };
-        } else {
-          librariesCount['detachedComponents'][name].count += 1;
-          librariesCount['detachedComponents'][name].ids.push(idToAdd);
-        }
-      } 
-      // Check if it's from an external library
-      else if (node.mainComponent?.remote) {
-        // For external components, use library name + component name
-        let libraryName = node.mainComponent?.remote ? node.mainComponent.parent?.name || 'Unknown Library' : 'Local Library';
-        let name = node.mainComponent?.name || 'Unknown Component';
-        let fullName = `${libraryName} / ${name}`;
+  
+  // Use an iterative approach with batching to improve performance
+  const nodesToProcess: any[] = [node];
+  const batchSize = 100;
+  let processed = 0;
+  
+  function processBatch() {
+    const endIndex = Math.min(processed + batchSize, nodesToProcess.length);
+    
+    for (let i = processed; i < endIndex; i++) {
+      const currentNode = nodesToProcess[i];
+      processed++;
+      
+      if (currentNode.type === 'INSTANCE') {
+        // Reduce verbose logging to improve performance
+        console.log(`Processing instance: ${currentNode.name}`);
         
-        if (!librariesCount['components'][fullName]) {
-          count++;
-          librariesCount['components'][fullName] = { count: count, ids: [idToAdd] };
-        } else {
-          librariesCount['components'][fullName].count += 1;
-          librariesCount['components'][fullName].ids.push(idToAdd);
+        const idToAdd = currentNode.id || '';
+        
+        // Check if the component is detached
+        if (currentNode.mainComponent?.parent === null && currentNode.masterComponent?.detached) {
+          let name = 'Detached Component';
+          if (!librariesCount['detachedComponents'][name]) {
+            librariesCount['detachedComponents'][name] = { count: 1, ids: [idToAdd] };
+          } else {
+            librariesCount['detachedComponents'][name].count += 1;
+            librariesCount['detachedComponents'][name].ids.push(idToAdd);
+          }
+        } 
+        // Check if it's from an external library
+        else if (currentNode.mainComponent?.remote) {
+          // For external components, use library name + component name
+          let libraryName = currentNode.mainComponent?.remote ? 
+            currentNode.mainComponent.parent?.name || 'Unknown Library' : 'Local Library';
+          let name = currentNode.mainComponent?.name || 'Unknown Component';
+          let fullName = `${libraryName} / ${name}`;
+          
+          if (!librariesCount['components'][fullName]) {
+            librariesCount['components'][fullName] = { count: 1, ids: [idToAdd] };
+          } else {
+            librariesCount['components'][fullName].count += 1;
+            librariesCount['components'][fullName].ids.push(idToAdd);
+          }
+        } 
+        // If not detached and not from external library, it's a local component
+        else {
+          let name = currentNode.mainComponent?.name || 'Unknown Local Component';
+          if (!librariesCount['localComponents'][name]) {
+            librariesCount['localComponents'][name] = { count: 1, ids: [idToAdd] };
+          } else {
+            librariesCount['localComponents'][name].count += 1;
+            librariesCount['localComponents'][name].ids.push(idToAdd);
+          }
         }
-      } 
-      // If not detached and not from external library, it's a local component
-      else {
-        let name = node.mainComponent?.name || 'Unknown Local Component';
-        if (!librariesCount['localComponents'][name]) {
-          localCount++;
-          librariesCount['localComponents'][name] = { count: localCount, ids: [idToAdd] };
-        } else {
-          librariesCount['localComponents'][name].count += 1;
-          librariesCount['localComponents'][name].ids.push(idToAdd);
-        }
+      }
+      
+      // Add children to process queue, except for when its an INSTANCE
+      if ('children' in currentNode && currentNode.type !== 'INSTANCE') {
+        nodesToProcess.push(...currentNode.children);
       }
     }
-
-    // Traverse all nodes, except for when its an INSTANCE of a COMPONENT
-    if ('children' in node && node.type !== 'INSTANCE') {
-      for (const child of node.children) {
-        traverse(child);
-      }
+    
+    // If there are more nodes to process, schedule the next batch with setTimeout
+    if (processed < nodesToProcess.length) {
+      setTimeout(processBatch, 0);
     }
   }
-
-  // Start traversal from the root of the document
-  traverse(node);
+  
+  // Start processing
+  processBatch();
 }
 
 export function resetCounter() {
