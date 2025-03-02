@@ -1,16 +1,18 @@
+
 {
   "name": "Design Doctor",
-  "id": "1317128060058848201",
+  "id": "1297115776054846294",
   "api": "1.0.0",
-  "main": "dist/code.js",
+  "main": "widget-src/code.tsx",
   "capabilities": [],
   "enableProposedApi": false,
-  "documentAccess": "dynamic-page",
   "editorType": [
-    "figma"
+    "figma",
+    "figjam"
   ],
   "containsWidget": true,
   "widgetApi": "1.0.0",
+  "documentAccess": "dynamic-page",
   "networkAccess": {
     "allowedDomains": [
       "none"

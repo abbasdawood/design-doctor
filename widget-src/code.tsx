@@ -73,18 +73,25 @@ function Widget() {
     // Log the reset for verification
     console.log("Reset completed, starting new analysis");
 
-    figma.skipInvisibleInstanceChildren = true;
+    figma.skipInvisibleInstanceChildren = false; // Change to false to include invisible children
     
     // Find all sections on the page
     const sections = currentPage.findAllWithCriteria({
       types: ["SECTION"],
     });
     
-    // Process all sections with await for async traversal
-    for (const section of sections) {
-      console.log("Traversing ", section.name);
-      await traverseInstanceNodes(section);
-      traverseAllNodes(section, "colourStyles");
+    // If no sections found, check if we need to analyze the whole page
+    if (sections.length === 0) {
+      console.log("No sections found, analyzing the whole page");
+      await traverseInstanceNodes(currentPage);
+      traverseAllNodes(currentPage, "colourStyles");
+    } else {
+      // Process all sections with await for async traversal
+      for (const section of sections) {
+        console.log("Traversing ", section.name);
+        await traverseInstanceNodes(section);
+        traverseAllNodes(section, "colourStyles");
+      }
     }
     
     // Calculate totals
@@ -140,10 +147,16 @@ function Widget() {
       if (e.propertyName === "reset") {
         resetData();
         setIsLoading(true);
-        // After a small delay, run the analysis again
-        setTimeout(() => {
-          countStuffOnCurrentPage();
-        }, 500);
+        // Use an async function to handle the reset and counting
+        (async () => {
+          try {
+            await countStuffOnCurrentPage();
+          } catch (error) {
+            console.error("Error during analysis:", error);
+            figma.notify("Error during analysis. Please try again.");
+            setIsLoading(false);
+          }
+        })();
       }
     },
   );
