@@ -284,7 +284,7 @@ function Widget() {
     },
   )
 
-  const renderLibraryCounts = (type: 'components' | 'colourStyles' | 'textStyles' | 'localComponents') => {
+  const renderLibraryCounts = (type: 'components' | 'colourStyles' | 'textStyles' | 'localComponents' | 'detachedComponents') => {
 
     const characterLength = 45;
 
@@ -367,22 +367,22 @@ function Widget() {
           </Text>
           
           {/* Component Counts */}
-          <AutoLayout direction="vertical" spacing={8} width={'fill-parent'} padding={{ top: 8 }}>
+          {/* <AutoLayout direction="vertical" spacing={8} width={'fill-parent'} padding={{ top: 8 }}>
             <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'}>
               <Text fontSize={10} fontFamily="Nunito">External Components:</Text>
-              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'}>{Object.values(libraryCounts['components']).reduce((a, b) => a + b.count, 0)}</Text>
+              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'}>{`${Object.values(libraryCounts['components']).reduce((a, b) => a + b.count, 0)}`}</Text>
             </AutoLayout>
             
             <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'}>
               <Text fontSize={10} fontFamily="Nunito" fill={'#f00'}>Local Components:</Text>
-              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'} fill={'#f00'}>{Object.values(libraryCounts['localComponents']).reduce((a, b) => a + b.count, 0)}</Text>
+              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'} fill={'#f00'}>{`${Object.values(libraryCounts['localComponents']).reduce((a, b) => a + b.count, 0)}`}</Text>
             </AutoLayout>
             
             <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'}>
               <Text fontSize={10} fontFamily="Nunito" fill={'#FF9900'}>Detached Components:</Text>
-              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'} fill={'#FF9900'}>{Object.values(libraryCounts['detachedComponents']).reduce((a, b) => a + b.count, 0)}</Text>
+              <Text fontSize={10} fontFamily="Nunito" fontWeight={'bold'} fill={'#FF9900'}>{`${Object.values(libraryCounts['detachedComponents']).reduce((a, b) => a + b.count, 0)}`}</Text>
             </AutoLayout>
-          </AutoLayout>
+          </AutoLayout> */}
           
           <AutoLayout
             padding={{ vertical: 4, horizontal: 8 }}
