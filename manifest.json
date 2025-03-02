@@ -3,7 +3,7 @@
   "name": "Design Doctor",
   "id": "1297115776054846294",
   "api": "1.0.0",
-  "main": "widget-src/code.tsx",
+  "main": "dist/code.js",
   "capabilities": [],
   "enableProposedApi": false,
   "editorType": [
