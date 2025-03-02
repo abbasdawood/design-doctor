@@ -1,5 +1,5 @@
 const { widget } = figma
-const { useSyncedState, usePropertyMenu, AutoLayout, Text, SVG } = widget
+const { useSyncedState, usePropertyMenu, useEffect, AutoLayout, Text, SVG } = widget
 
 interface LibrariesCount {
   components: Record<string, { count: number; ids: string[] }>;
@@ -17,8 +17,10 @@ let librariesCount: LibrariesCount = {
 
 interface Library {
   ids: string[];
-  name: string;
+  name?: string;
   count: number;
+  isApproved?: boolean;
+  key?: string;
 }
 
 // Helpers
@@ -95,50 +97,58 @@ function traverseInstanceNodes(node: BaseNode) {
            Node type --> ${node.type}\n 
            Node Parent Type --> ${node.parent?.type}\n 
            Node Main Component --> ${node.mainComponent}\n
-           Node Main Component Name --> ${node.mainComponent.name}\n
-           Node Main Component Parent --> ${node.mainComponent.parent}\n
-           Node Main Component Parent Name --> ${node.mainComponent.parent?.name}\n
+           Node Main Component Name --> ${node.mainComponent?.name}\n
+           Node Main Component Parent --> ${node.mainComponent?.parent}\n
+           Node Main Component Parent Name --> ${node.mainComponent?.parent?.name}\n
            Node Main Component Remote --> ${node.mainComponent?.remote}`
       );
 
       let count = 0;
       let localCount = 0;
 
-      let name = node.masterComponent.detached? 'Detached Parent' : (node.mainComponent?.parent?.name || node.mainComponent.name);
-      const idToAdd = node.id || ''; // Provide a default value ('') if layerId is undefined
+      // Handle potential null/undefined values safely
+      if (!node.mainComponent) return;
+      
+      let name = node.masterComponent?.detached ? 'Detached Parent' : (node.mainComponent?.parent?.name || node.mainComponent?.name);
+      const idToAdd = node.id || ''; 
+      
+      // Get the component key for remote components
+      const componentKey = node.mainComponent?.key || '';
 
       if (node.mainComponent.remote) {
-        if (!librariesCount['components'][name]) {
+        // Check if we're filtering by approved library keys and if this component is in the approved list
+        const isApproved = approvedLibraryKeys.length === 0 || approvedLibraryKeys.includes(componentKey);
+        
+        // Add a tag to the name to indicate if it's approved or not
+        const taggedName = isApproved ? `✅ ${name}` : `❌ ${name}`;
+        
+        if (!librariesCount['components'][taggedName]) {
           count++;
-          librariesCount['components'][name] = { count: count, ids: [idToAdd] };
+          librariesCount['components'][taggedName] = { 
+            count: count, 
+            ids: [idToAdd],
+            isApproved: isApproved,
+            key: componentKey
+          };
         } else {
-          librariesCount['components'][name].count += 1;
-          librariesCount['components'][name].ids.push(idToAdd);
+          librariesCount['components'][taggedName].count += 1;
+          librariesCount['components'][taggedName].ids.push(idToAdd);
         }
       } else {
         if (!librariesCount['localComponents'][name]) {
           localCount++;
-          librariesCount['localComponents'][name] = { count: localCount, ids: [idToAdd] };
+          librariesCount['localComponents'][name] = { 
+            count: localCount, 
+            ids: [idToAdd],
+            isApproved: false,
+            key: ''
+          };
         } else {
           librariesCount['localComponents'][name].count += 1;
           librariesCount['localComponents'][name].ids.push(idToAdd);
         }
       }
-
-      // if (!librariesCount[library][name]) {
-      //   count++;
-      //   librariesCount[library][name] = { count: count, ids: [idToAdd] };
-      // } else {
-      //   librariesCount[library][name].count += 1;
-      //   librariesCount[library][name].ids.push(idToAdd);
-      // }
     }
-
-    // we need to filter out:
-    // Node type == Instance, Main component !== undefined
-
-    // Recursively traverse child nodes
-
 
     // Traverse all nodes, except for when its an INSTANCE of a COMPONENT
     if ('children' in node && node.type !== 'INSTANCE') {
@@ -177,6 +187,40 @@ function selectLayersById(layerIds: string[]) {
   }
 }
 
+async function loadApprovedComponentKeys() {
+  // Get all available libraries
+  const libraries = await figma.teamLibrary.getAvailableLibrariesAsync();
+  
+  // Create an array to store component keys
+  const componentKeys: string[] = [];
+  
+  // For demonstration, we'll prompt the user to select libraries to include
+  // In a real implementation, you might load this from a configuration
+  const updatedKeys = await figma.clientStorage.getAsync('approvedComponentKeys') || [];
+  
+  if (updatedKeys.length === 0) {
+    // In a real implementation, you might want to show a UI to select which libraries to include
+    // For now, we'll just include all components from all libraries
+    for (const library of libraries) {
+      try {
+        // This is a simplified example - in a real scenario you might want to fetch components 
+        // more selectively or from a predefined list
+        const libraryComponents = await figma.teamLibrary.getComponentDataAsync(library.key);
+        libraryComponents.forEach(component => {
+          componentKeys.push(component.key);
+        });
+      } catch (error) {
+        console.error(`Error loading components from library ${library.name}:`, error);
+      }
+    }
+    
+    // Store the keys for future use
+    await figma.clientStorage.setAsync('approvedComponentKeys', componentKeys);
+  }
+  
+  return updatedKeys.length > 0 ? updatedKeys : componentKeys;
+}
+
 function Widget() {
   const [totalComponentCount, setTotalComponentCount] = useSyncedState('totalComponentCount', 0);
   const [totalColourStyleCount, setTotalColourStyleCount] = useSyncedState('totalColourStyleCount', 0);
@@ -184,68 +228,60 @@ function Widget() {
 
   const [libraryCounts, setLibraryCounts] = useSyncedState('libraryCounts', { components: {}, colourStyles: {}, textStyles: {} , localComponents:{}});
   const [localComponentsCount, setLocalComponentsCount] = useSyncedState('localComponentsCount', 0);
-
+  
+  const [isLoading, setIsLoading] = useSyncedState('isLoading', false);
+  const [progress, setProgress] = useSyncedState('progress', { current: 0, total: 0, message: '' });
+  const [approvedLibraryKeys, setApprovedLibraryKeys] = useSyncedState('approvedLibraryKeys', []);
+  
   const [unknowns, setUnknowns] = useSyncedState('unknowns', 0);
   let uk = 0;
 
   const countStuffOnCurrentPage = async () => {
-    const currentPage = figma.currentPage;
-    let totalLocalInstanceCount = 0;
-
+    setIsLoading(true);
     resetCounter();
-
-    // Helper function to increment count
-    // const incrementCount = (library: 'components' | 'colourStyles' | 'textStyles', name: string) => {
-    //   if (library === 'components' && (name === 'Deleted Parent' || name === 'Unknown Parent')) {
-    //     uk++;
-    //     setUnknowns(uk);
-    //   }
-    //   librariesCount[library][name] = (librariesCount[library][name] || 0) + 1;
-    // };
-
-    figma.skipInvisibleInstanceChildren = true;
-    for (const node of currentPage.findAllWithCriteria({ types: ['SECTION'] })) {
-      // First find the sections
-      console.log('Traversing ', node.name)
-
-      traverseInstanceNodes(node);
-      traverseAllNodes(node, 'colourStyles');
-
-      /*
-
-      if ('children' in node) {
-        for (const child of node.children) {
-          if (child.type === 'INSTANCE') {
-            if (child.mainComponent?.remote) {
-              let key = child.mainComponent ? (child.mainComponent.parent ? child.mainComponent.parent.name : 'Deleted Parent') : 'Unknown Parent';
-              
-              incrementCount('components', key);
-              // }
-            }
-            else {
-              totalLocalInstanceCount++;
-            }
-          }
-
-          // Check for color styles
-
-
-          // Check for text styles
-
+    
+    // Run the analysis in the background
+    setTimeout(async () => {
+      try {
+        const currentPage = figma.currentPage;
+        const sections = currentPage.findAllWithCriteria({ types: ['SECTION'] });
+        
+        setProgress({ current: 0, total: sections.length, message: 'Finding sections...' });
+        figma.skipInvisibleInstanceChildren = true;
+        
+        for (let i = 0; i < sections.length; i++) {
+          const node = sections[i];
+          setProgress({ 
+            current: i + 1, 
+            total: sections.length, 
+            message: `Processing section: ${node.name} (${i + 1}/${sections.length})` 
+          });
+          
+          console.log('Traversing ', node.name);
+          
+          // Process components first
+          traverseInstanceNodes(node);
+          
+          // Then process color styles
+          traverseAllNodes(node, 'colourStyles');
         }
-      }*/
-
-
-    }
-
-    setTotalComponentCount(totalComponentCount + Object.values(librariesCount['components']).reduce((a, b) => a + b.count, 0));
-    setLocalComponentsCount(localComponentsCount + Object.values(librariesCount['localComponents']).reduce((a, b) => a + b.count, 0));
-    setTotalColourStyleCount(totalColourStyleCount + Object.values(librariesCount['colourStyles']).reduce((a, b) => a + b.count, 0));
-    // setTotalTextStyleCount(totalTextStyleCount + Object.values(librariesCount['textStyles']).reduce((a, b) => a + b, 0));
-    setLibraryCounts(librariesCount);
-
-    console.log(`Library Instance Counts: `, librariesCount);
-    console.log(`Total Local Instances: ${totalLocalInstanceCount}`);
+        
+        setTotalComponentCount(totalComponentCount + Object.values(librariesCount['components']).reduce((a, b) => a + b.count, 0));
+        setLocalComponentsCount(localComponentsCount + Object.values(librariesCount['localComponents']).reduce((a, b) => a + b.count, 0));
+        setTotalColourStyleCount(totalColourStyleCount + Object.values(librariesCount['colourStyles']).reduce((a, b) => a + b.count, 0));
+        setLibraryCounts(librariesCount);
+        
+        console.log(`Library Instance Counts: `, librariesCount);
+        console.log(`Total Local Instances: ${Object.values(librariesCount['localComponents']).reduce((a, b) => a + b.count, 0)}`);
+        
+        setProgress({ current: sections.length, total: sections.length, message: 'Analysis complete!' });
+      } catch (error) {
+        console.error('Error during analysis:', error);
+        setProgress({ current: 0, total: 0, message: 'Error during analysis' });
+      } finally {
+        setIsLoading(false);
+      }
+    }, 100); // Small delay to allow UI to update first
   }
 
 
@@ -309,13 +345,68 @@ function Widget() {
   }
 
 
+  // Fetch approved library keys when the widget is first loaded
+  useEffect(() => {
+    const fetchApprovedKeys = async () => {
+      const keys = await loadApprovedComponentKeys();
+      setApprovedLibraryKeys(keys);
+    };
+    
+    fetchApprovedKeys();
+  }, []);
+
+  // Loading state UI
+  if (isLoading) {
+    return (
+      <AutoLayout
+        direction="vertical"
+        minWidth={320}
+        height={'hug-contents'}
+        verticalAlignItems={'center'}
+        spacing={24}
+        padding={16}
+        cornerRadius={16}
+        fill={'#FFFFFF'}
+        stroke={'#E6E6E6'}
+      >
+        <AutoLayout
+          horizontalAlignItems={'center'}
+          spacing={'auto'}
+          width={'fill-parent'}
+          verticalAlignItems="center"
+        >
+          <Text fontSize={18} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🩺 Design Doctor</Text>
+          <Text fontSize={10} fontFamily="Nunito" fill="#666">Analyzing...</Text>
+        </AutoLayout>
+        
+        <AutoLayout direction="vertical" spacing={8} width={'fill-parent'}>
+          <Text fontSize={12} fontFamily="Nunito">{progress.message}</Text>
+          
+          <AutoLayout width={'fill-parent'} height={8} fill="#f3f3f3" cornerRadius={4}>
+            <AutoLayout 
+              width={`${(progress.current / Math.max(progress.total, 1)) * 100}%`} 
+              height={8} 
+              fill="#C869EF" 
+              cornerRadius={4}
+            />
+          </AutoLayout>
+          
+          <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="center">
+            {progress.current} of {progress.total} sections processed
+          </Text>
+        </AutoLayout>
+      </AutoLayout>
+    );
+  }
+
+  // Main UI
   return (
     <AutoLayout
       direction="vertical"
       minWidth={320}
       height={'hug-contents'}
       verticalAlignItems={'center'}
-      spacing={32}
+      spacing={24}
       padding={16}
       cornerRadius={16}
       fill={'#FFFFFF'}
@@ -339,9 +430,38 @@ function Widget() {
           onClick={() => {
             countStuffOnCurrentPage()
           }}>
-          <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Run Again</Text>
+          <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Run Analysis</Text>
         </AutoLayout>
       </AutoLayout>
+      
+      {/* Library Configuration */}
+      <AutoLayout direction="vertical" spacing={8} width={'fill-parent'}>
+        <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
+          <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>Library Configuration</Text>
+          <AutoLayout
+            padding={{vertical:4, horizontal:8}}
+            stroke={'#f3f3f3'}
+            fill={'#fafafa'}
+            strokeWidth={1}
+            horizontalAlignItems={'center'}
+            cornerRadius={14}
+            verticalAlignItems="center"
+            onClick={async () => {
+              // In a real implementation, you'd show a UI for selecting libraries
+              // For this example, we'll reset the list to force re-fetching
+              await figma.clientStorage.setAsync('approvedComponentKeys', []);
+              const keys = await loadApprovedComponentKeys();
+              setApprovedLibraryKeys(keys);
+            }}>
+            <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Configure</Text>
+          </AutoLayout>
+        </AutoLayout>
+        <Text fontSize={10} fontFamily="Nunito" fill="#666">
+          {approvedLibraryKeys.length} approved component keys loaded
+        </Text>
+      </AutoLayout>
+      
+      {/* Components Section */}
       <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
         <AutoLayout
           direction="vertical" width={'fill-parent'} spacing={10}
@@ -364,15 +484,10 @@ function Widget() {
           {renderLibraryCounts('components')}
           <Text fill={'#f00'} fontSize={12} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🔻 Local Components</Text>
           {renderLibraryCounts('localComponents')}
-
-          {/* <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
-            <Text fontSize={10} fontFamily="Nunito" fill={'#f00'}>Local Components</Text>
-            <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={'#f00'}>{localComponentsCount}</Text>
-          </AutoLayout> */}
         </AutoLayout>
-
-
       </AutoLayout>
+      
+      {/* Colors Section */}
       <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
         <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
           <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
@@ -392,22 +507,6 @@ function Widget() {
         </AutoLayout>
         {renderLibraryCounts('colourStyles')}
       </AutoLayout>
-      {/* <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
-        <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
-          <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
-            <SVG src={`
-            <svg width="8" height="10" viewBox="0 0 8 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0.0117188 0.945312H7.23633L7.24805 3.36523H6.90234C6.78906 2.50195 6.46484 1.91797 5.92969 1.61328C5.62891 1.44531 5.17969 1.35352 4.58203 1.33789V7.6543C4.58203 8.0957 4.6582 8.38867 4.81055 8.5332C4.9668 8.67773 5.28906 8.75 5.77734 8.75V9.05469H1.5V8.75C1.96875 8.75 2.2793 8.67773 2.43164 8.5332C2.58789 8.38477 2.66602 8.0918 2.66602 7.6543V1.33789C2.08008 1.35352 1.63086 1.44531 1.31836 1.61328C0.744141 1.92578 0.419922 2.50977 0.345703 3.36523H0L0.0117188 0.945312Z" fill="black"/>
-            </svg>            
-            `}></SVG>
-            <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>Text Styles</Text>
-          </AutoLayout>
-          <Text fontFamily="Nunito" horizontalAlignText="right" fontWeight={'bold'} fontSize={12}>
-            {showCoverage('colours')}
-          </Text>
-        </AutoLayout>
-        {renderLibraryCounts('textStyles')}
-      </AutoLayout> */}
     </AutoLayout>
   )
 }
