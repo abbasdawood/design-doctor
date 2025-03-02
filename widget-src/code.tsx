@@ -311,40 +311,63 @@ function Widget() {
 
   return (
     <AutoLayout
-      direction="vertical"
-      minWidth={320}
+      direction="horizontal"
+      width={'hug-contents'}
       height={'hug-contents'}
-      verticalAlignItems={'center'}
-      spacing={32}
+      verticalAlignItems={'start'}
+      spacing={16}
       padding={16}
       cornerRadius={16}
       fill={'#FFFFFF'}
       stroke={'#E6E6E6'}
     >
+      {/* Hero coverage section */}
       <AutoLayout
+        direction="vertical"
+        spacing={8}
+        padding={16}
+        width={180}
+        height={'fill-parent'}
+        verticalAlignItems={'center'}
         horizontalAlignItems={'center'}
-        spacing={'auto'}
-        width={'fill-parent'}
-        verticalAlignItems="center"
+        fill={'#f9f9f9'}
+        cornerRadius={8}
       >
-        <Text fontSize={18} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🩺 Design Doctor</Text>
+        <Text fontSize={18} horizontalAlignText={'center'} fontFamily="Nunito" fontWeight={'bold'}>🩺 Design Doctor</Text>
+        
         <AutoLayout
-          padding={{vertical:4, horizontal:8}}
-          stroke={'#f3f3f3'}
-          fill={'#fafafa'}
-          strokeWidth={1}
+          direction="vertical"
+          spacing={4}
+          verticalAlignItems={'center'}
           horizontalAlignItems={'center'}
-          cornerRadius={14}
-          verticalAlignItems="center"
-          onClick={() => {
-            countStuffOnCurrentPage()
-          }}>
-          <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Run Again</Text>
+          padding={{top: 16, bottom: 16}}
+        >
+          <Text fontSize={10} fontFamily="Nunito">Components Coverage</Text>
+          <Text fontSize={48} fontFamily="Nunito" fontWeight={'bold'} fill={'#C869EF'}>
+            {showCoverage('components')}%
+          </Text>
+          <AutoLayout
+            padding={{vertical:4, horizontal:8}}
+            stroke={'#f3f3f3'}
+            fill={'#fafafa'}
+            strokeWidth={1}
+            horizontalAlignItems={'center'}
+            cornerRadius={14}
+            verticalAlignItems="center"
+            onClick={() => {
+              countStuffOnCurrentPage()
+            }}>
+            <Text fontSize={10} fill={'#000'} horizontalAlignText="center" fontFamily="Nunito">Run Again</Text>
+          </AutoLayout>
         </AutoLayout>
       </AutoLayout>
-      <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
+
+      {/* Details section */}
+      <AutoLayout direction="vertical" spacing={16} width={320}>
         <AutoLayout
-          direction="vertical" width={'fill-parent'} spacing={10}
+          direction="vertical" 
+          width={'fill-parent'} 
+          spacing={10}
         >
           <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
             <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
@@ -355,59 +378,31 @@ function Widget() {
               <path d="M6.22252 5.99999L8.76811 3.45441L11.3137 5.99999L8.76811 8.54558L6.22252 5.99999Z" fill="#C869EF" />
               <path d="M3.11128 9.11126L5.65686 6.56568L8.20245 9.11126L5.65686 11.6568L3.11128 9.11126Z" fill="#C869EF" />
             </svg>`}></SVG>
-              <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>Components Coverage</Text>
+              <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>Components</Text>
             </AutoLayout>
-            <Text fontFamily="Nunito" horizontalAlignText="right" fontWeight={'bold'} fontSize={12}>
-              {showCoverage('components')} %
-            </Text>
           </AutoLayout>
           {renderLibraryCounts('components')}
           <Text fill={'#f00'} fontSize={12} horizontalAlignText={'left'} fontFamily="Nunito" fontWeight={'bold'}>🔻 Local Components</Text>
           {renderLibraryCounts('localComponents')}
-
-          {/* <AutoLayout direction="horizontal" spacing={'auto'} width={'fill-parent'} verticalAlignItems="center">
-            <Text fontSize={10} fontFamily="Nunito" fill={'#f00'}>Local Components</Text>
-            <Text fontSize={10} fontFamily="Nunito" horizontalAlignText="right" fill={'#f00'}>{localComponentsCount}</Text>
-          </AutoLayout> */}
         </AutoLayout>
 
-
-      </AutoLayout>
-      <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
-        <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
-          <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
-            <SVG src={`
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="3.6" height="3.6" fill="#EF8B8B"/>
-            <rect x="4.3999" width="3.6" height="3.6" fill="#369EFF"/>
-            <rect x="4.3999" y="4.40002" width="3.6" height="3.6" fill="#FFB966"/>
-            <rect y="4.40002" width="3.6" height="3.6" fill="#66DB9A"/>
-            </svg>
-            `}></SVG>
-            <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>Colours </Text>
+        <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
+          <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
+            <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
+              <SVG src={`
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="3.6" height="3.6" fill="#EF8B8B"/>
+              <rect x="4.3999" width="3.6" height="3.6" fill="#369EFF"/>
+              <rect x="4.3999" y="4.40002" width="3.6" height="3.6" fill="#FFB966"/>
+              <rect y="4.40002" width="3.6" height="3.6" fill="#66DB9A"/>
+              </svg>
+              `}></SVG>
+              <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>Colours </Text>
+            </AutoLayout>
           </AutoLayout>
-          <Text fontFamily="Nunito" horizontalAlignText="right" fontWeight={'bold'} fontSize={12}>
-            {showCoverage('colours')}
-          </Text>
+          {renderLibraryCounts('colourStyles')}
         </AutoLayout>
-        {renderLibraryCounts('colourStyles')}
       </AutoLayout>
-      {/* <AutoLayout direction="vertical" spacing={10} width={'fill-parent'}>
-        <AutoLayout width={'fill-parent'} direction="horizontal" spacing={'auto'} verticalAlignItems="center">
-          <AutoLayout direction="horizontal" spacing={4} verticalAlignItems="center">
-            <SVG src={`
-            <svg width="8" height="10" viewBox="0 0 8 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0.0117188 0.945312H7.23633L7.24805 3.36523H6.90234C6.78906 2.50195 6.46484 1.91797 5.92969 1.61328C5.62891 1.44531 5.17969 1.35352 4.58203 1.33789V7.6543C4.58203 8.0957 4.6582 8.38867 4.81055 8.5332C4.9668 8.67773 5.28906 8.75 5.77734 8.75V9.05469H1.5V8.75C1.96875 8.75 2.2793 8.67773 2.43164 8.5332C2.58789 8.38477 2.66602 8.0918 2.66602 7.6543V1.33789C2.08008 1.35352 1.63086 1.44531 1.31836 1.61328C0.744141 1.92578 0.419922 2.50977 0.345703 3.36523H0L0.0117188 0.945312Z" fill="black"/>
-            </svg>            
-            `}></SVG>
-            <Text fontFamily="Nunito" fontWeight={'bold'} fontSize={12}>Text Styles</Text>
-          </AutoLayout>
-          <Text fontFamily="Nunito" horizontalAlignText="right" fontWeight={'bold'} fontSize={12}>
-            {showCoverage('colours')}
-          </Text>
-        </AutoLayout>
-        {renderLibraryCounts('textStyles')}
-      </AutoLayout> */}
     </AutoLayout>
   )
 }
